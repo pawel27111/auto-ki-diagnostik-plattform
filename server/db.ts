@@ -89,4 +89,160 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// Vehicle queries
+export async function createVehicle(data: {
+  userId: number;
+  vin: string;
+  make: string;
+  model: string;
+  year: number;
+  engineType?: string | null;
+  fuelType?: string | null;
+  licensePlate?: string | null;
+  mileage?: number | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { vehicles } = await import("../drizzle/schema");
+  const result = await db.insert(vehicles).values(data);
+  return result;
+}
+
+export async function getUserVehicles(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { vehicles } = await import("../drizzle/schema");
+  return db.select().from(vehicles).where(eq(vehicles.userId, userId));
+}
+
+export async function getVehicleById(vehicleId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const { vehicles } = await import("../drizzle/schema");
+  const result = await db.select().from(vehicles).where(eq(vehicles.id, vehicleId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// OBD Device queries
+export async function createObdDevice(data: {
+  userId: number;
+  deviceName: string;
+  deviceType: "elm327" | "canAdapter" | "wifi" | "bluetooth";
+  connectionString?: string | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { obdDevices } = await import("../drizzle/schema");
+  return db.insert(obdDevices).values(data);
+}
+
+export async function getUserObdDevices(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { obdDevices } = await import("../drizzle/schema");
+  return db.select().from(obdDevices).where(eq(obdDevices.userId, userId));
+}
+
+// Diagnostic queries
+export async function createDiagnostic(data: {
+  vehicleId: number;
+  userId: number;
+  obdDeviceId?: number | null;
+  diagnosticType: "full_scan" | "quick_scan" | "custom" | "real_time";
+  mileageAtDiagnosis?: number | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { diagnostics } = await import("../drizzle/schema");
+  return db.insert(diagnostics).values(data);
+}
+
+export async function getDiagnosticById(diagnosticId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const { diagnostics } = await import("../drizzle/schema");
+  const result = await db.select().from(diagnostics).where(eq(diagnostics.id, diagnosticId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getVehicleDiagnostics(vehicleId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { diagnostics } = await import("../drizzle/schema");
+  return db.select().from(diagnostics).where(eq(diagnostics.vehicleId, vehicleId));
+}
+
+export async function updateDiagnosticStatus(diagnosticId: number, status: "running" | "completed" | "failed" | "cancelled", data?: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { diagnostics } = await import("../drizzle/schema");
+  const updateData: any = { status };
+  
+  if (status === "completed") {
+    updateData.completedAt = new Date();
+  }
+  
+  if (data) {
+    Object.assign(updateData, data);
+  }
+  
+  return db.update(diagnostics).set(updateData).where(eq(diagnostics.id, diagnosticId));
+}
+
+// Error Code queries
+export async function createErrorCode(data: {
+  diagnosticId: number;
+  code: string;
+  description?: string | null;
+  severity: "info" | "warning" | "error" | "critical";
+  system?: string | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { errorCodes } = await import("../drizzle/schema");
+  return db.insert(errorCodes).values(data);
+}
+
+export async function getDiagnosticErrorCodes(diagnosticId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { errorCodes } = await import("../drizzle/schema");
+  return db.select().from(errorCodes).where(eq(errorCodes.diagnosticId, diagnosticId));
+}
+
+// OBD Parameter queries
+export async function createObdParameter(data: {
+  diagnosticId: number;
+  parameterId: string;
+  parameterName: string;
+  value: string;
+  unit?: string | null;
+  minValue?: string | null;
+  maxValue?: string | null;
+  isNormal?: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { obdParameters } = await import("../drizzle/schema");
+  return db.insert(obdParameters).values(data);
+}
+
+export async function getDiagnosticParameters(diagnosticId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { obdParameters } = await import("../drizzle/schema");
+  return db.select().from(obdParameters).where(eq(obdParameters.diagnosticId, diagnosticId));
+}
