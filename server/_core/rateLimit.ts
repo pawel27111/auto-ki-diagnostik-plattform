@@ -18,13 +18,21 @@ export class RateLimiter {
    * @returns whether the attempt is within the limit, plus seconds until the
    * oldest hit in the window expires so callers can tell the user when to retry.
    */
-  check(key: string, now = Date.now()): { allowed: boolean; retryAfterSeconds: number } {
+  check(
+    key: string,
+    now = Date.now()
+  ): { allowed: boolean; retryAfterSeconds: number } {
     const cutoff = now - this.windowMs;
-    const recent = (this.hits.get(key) ?? []).filter(timestamp => timestamp > cutoff);
+    const recent = (this.hits.get(key) ?? []).filter(
+      timestamp => timestamp > cutoff
+    );
 
     if (recent.length >= this.limit) {
       this.hits.set(key, recent);
-      const retryAfterSeconds = Math.max(1, Math.ceil((recent[0] + this.windowMs - now) / 1000));
+      const retryAfterSeconds = Math.max(
+        1,
+        Math.ceil((recent[0] + this.windowMs - now) / 1000)
+      );
       return { allowed: false, retryAfterSeconds };
     }
 

@@ -44,7 +44,10 @@ export const ENV = {
   obdAllowedPorts: parseList(process.env.OBD_ALLOWED_PORTS),
 
   llm: {
-    provider: (process.env.LLM_PROVIDER ?? "auto") as "openrouter" | "lmstudio" | "auto",
+    provider: (process.env.LLM_PROVIDER ?? "auto") as
+      | "openrouter"
+      | "lmstudio"
+      | "auto",
     openRouterApiKey: process.env.OPENROUTER_API_KEY ?? "",
     openRouterModel: process.env.OPENROUTER_MODEL ?? "",
     lmStudioBaseUrl: process.env.LMSTUDIO_BASE_URL ?? "",
@@ -61,9 +64,21 @@ const REQUIRED_VARS: { key: string; value: string; hint: string }[] = [
     value: ENV.cookieSecret,
     hint: "used to sign session cookies; use at least 32 random characters",
   },
-  { key: "VITE_APP_ID", value: ENV.appId, hint: "OAuth client id for this app" },
-  { key: "OAUTH_SERVER_URL", value: ENV.oAuthServerUrl, hint: "base URL of the OAuth server" },
-  { key: "DATABASE_URL", value: ENV.databaseUrl, hint: "mysql://user:pass@host:3306/database" },
+  {
+    key: "VITE_APP_ID",
+    value: ENV.appId,
+    hint: "OAuth client id for this app",
+  },
+  {
+    key: "OAUTH_SERVER_URL",
+    value: ENV.oAuthServerUrl,
+    hint: "base URL of the OAuth server",
+  },
+  {
+    key: "DATABASE_URL",
+    value: ENV.databaseUrl,
+    hint: "mysql://user:pass@host:3306/database",
+  },
 ];
 
 const MIN_SECRET_LENGTH = 32;
@@ -92,8 +107,12 @@ export function assertRequiredEnv(): void {
   }
 
   if (problems.length > 0) {
-    console.error(`[Env] Cannot start, ${problems.length} configuration problem(s):\n${problems.join("\n")}`);
-    console.error("[Env] See .env.example for the full list of supported variables.");
+    console.error(
+      `[Env] Cannot start, ${problems.length} configuration problem(s):\n${problems.join("\n")}`
+    );
+    console.error(
+      "[Env] See .env.example for the full list of supported variables."
+    );
     process.exit(1);
   }
 }

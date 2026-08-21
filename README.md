@@ -1,49 +1,62 @@
-# AutoKI Assistent - Automotive AI Diagnostic Platform
+# AutoKI Assistent — Automotive AI Diagnostic Platform
 
-Eine professionelle Plattform für Automechaniker und Fahrzeugbegeisterte zur Durchführung intelligenter Fahrzeugdiagnosen über OBD-II (On-Board Diagnostics) mit KI-gestützter Analyse.
+Plattform für Werkstätten und Fahrzeugbesitzer zur OBD-II-Fahrzeugdiagnose mit
+KI-gestützter Interpretation der Fehlercodes.
 
 ## 🚗 Features
 
-### Core-Funktionalität
-- **OBD-II Diagnose**: Echtzeitverbindung mit Fahrzeugmotorsteuerung über OBD-Kabel (D-CAN, ELM327)
-- **Echtzeit-Datenerfassung**: Motorparameter wie RPM, Temperatur, Druck, Sauerstoffsensor
-- **Fehlercode-Analyse**: Automatische Erfassung und Interpretation von Fehlercodes (DTC)
-- **Fahrzeugverwaltung**: Verwaltung mehrerer Fahrzeuge mit VIN, Baujahr, Motortyp
-- **Diagnose-Verlauf**: Speicherung und Verfolgung aller Diagnose-Sitzungen
-- **Benutzerautentifizierung**: Sichere Benutzer-Verwaltung mit OAuth
+### Diagnose
+- **OBD-II über serielle Adapter**: ELM327 (USB/Bluetooth) und D-CAN
+- **Echte Protokolldekodierung**: SAE J1979 (Mode 01, Messwerte) und SAE J2012
+  (Mode 03, Fehlercodes)
+- **Live-Streaming**: Messwerte per Socket.io in Echtzeit ins Frontend
+- **Fahrzeugverwaltung**: mehrere Fahrzeuge je Konto, mit VIN und Kennzeichen
+- **Diagnose-Verlauf**: alle Sitzungen mit Messwerten und Fehlercodes
+- **CSV-Export** der Diagnoseberichte
+- **Simulationsmodus** für Entwicklung ohne Hardware — alle simulierten Werte
+  sind in Datenbank und Oberfläche als solche gekennzeichnet
 
-### Benutzeroberfläche
-- **Landing Page**: Professionelle Präsentation mit Hero-Section und Feature-Übersicht
-- **Dashboard**: Fahrzeugverwaltung, Diagnose-Übersicht, Berichte
-- **Diagnose-Interface**: Live-Datenvisualisierung mit interaktiven Grafiken
-- **Responsive Design**: Optimiert für Desktop, Tablet und Mobile
+### KI-Analyse
+- OpenRouter oder lokales LM Studio, umschaltbar
+- Fällt auf einen hinterlegten Katalog häufiger Codes zurück, wenn kein
+  Anbieter erreichbar ist — die Analyse schlägt nie hart fehl
+- Rate-Limiting pro Nutzer
 
 ## 🏗️ Architektur
 
 ### Tech Stack
-- **Frontend**: React 18, TypeScript, Tailwind CSS, Shadcn UI
-- **Backend**: Node.js, Express, tRPC, Drizzle ORM
-- **Datenbank**: MySQL mit Drizzle Schema
-- **Authentifizierung**: OAuth 2.0 mit Manus
-- **Deployment**: Docker-ready, Cloud-native
+- **Frontend**: React 19, TypeScript, Tailwind CSS 4, shadcn/ui, wouter
+- **Backend**: Node.js, Express, tRPC 11, Drizzle ORM, Socket.io
+- **Datenbank**: MySQL 8.0+
+- **Authentifizierung**: OAuth 2.0, Session als HttpOnly-Cookie (JWT)
 
-### Datenbankschema
+### Projektstruktur
 ```
-- users: Benutzer und Authentifizierung
-- vehicles: Fahrzeuginformationen (VIN, Make, Model, Year, etc.)
-- obdDevices: OBD-Geräte-Verwaltung (ELM327, CAN Adapter, etc.)
-- diagnostics: Diagnose-Sitzungen mit Status und Metriken
-- errorCodes: Erfasste Fehlercodes mit Schweregrad
-- obdParameters: Echtzeit-OBD-Parameter und Messwerte
-- diagnosticReports: Generierte Diagnoseberichte
+auto-ki-assistent/
+├── client/src/
+│   ├── pages/             # Home, Dashboard, Diagnostic, Realtime, Settings
+│   ├── components/        # App-Komponenten und shadcn/ui
+│   ├── hooks/             # useOBDStreaming
+│   └── lib/               # Formatierung, CSV-Export, tRPC-Client
+├── server/
+│   ├── _core/             # Auth, Env, Kontext, CSRF, Rate-Limiting
+│   ├── obd/
+│   │   ├── protocol.ts    # Reine Dekodierung, ohne I/O, voll getestet
+│   │   ├── obdManager.ts  # Serieller Transport, Kommando-Queue
+│   │   └── websocketHandler.ts
+│   ├── llm/               # LLM-Service und Router
+│   ├── obdRouter.ts       # tRPC-Endpunkte für Diagnose
+│   └── db.ts              # Datenzugriff inkl. Ownership-Filter
+├── drizzle/               # Schema und Migrationen
+└── server/__tests__/      # Testsuite
 ```
 
 ## 🚀 Getting Started
 
 ### Voraussetzungen
 - Node.js 18+
-- MySQL 8.0+
-- Git
+- pnpm 10+
+- MySQL 8.0+ (die Migrationen nutzen `REGEXP_REPLACE`)
 
 ### Installation
 
@@ -56,15 +69,19 @@ cd auto-ki-assistent
 2. **Abhängigkeiten installieren**
 ```bash
 pnpm install
+# Für echte OBD-Hardware werden die nativen serialport-Bindings gebraucht.
+# pnpm blockiert deren Build-Skript standardmäßig:
+pnpm approve-builds
 ```
 
 3. **Umgebungsvariablen konfigurieren**
 ```bash
 cp .env.example .env
-# Bearbeiten Sie .env mit Ihren Konfigurationen
+# JWT_SECRET, DATABASE_URL, VITE_APP_ID und OAUTH_SERVER_URL sind Pflicht.
+# Der Server bricht beim Start ab, wenn eines davon fehlt.
 ```
 
-4. **Datenbank initialisieren**
+4. **Datenbank migrieren**
 ```bash
 pnpm db:push
 ```
@@ -74,154 +91,190 @@ pnpm db:push
 pnpm dev
 ```
 
-Die Anwendung läuft dann unter `http://localhost:3000`
+Die Anwendung läuft unter `http://localhost:3000`.
 
 ## 📡 OBD-Integration
 
 ### Unterstützte Hardware
-- **ELM327 Bluetooth/USB Adapter** (Standard OBD-II)
-- **D-CAN Adapter** (BMW, Mercedes, Audi)
-- **WiFi OBD-Module**
-- **Proprietäre CAN-Adapter**
+- ELM327 (Bluetooth/USB), Standard OBD-II
+- D-CAN Adapter (BMW, Mercedes, Audi) — auf CAN 500 kBit/s festgelegt
+- Alles, was sich als serieller Port meldet und ELM-AT-Kommandos versteht
 
-### OBD-Parameter
-Die Plattform erfasst folgende Standard-Parameter:
-- **010C**: Engine RPM (Drehzahl)
-- **010D**: Vehicle Speed (Geschwindigkeit)
-- **0105**: Engine Coolant Temperature (Motortemperatur)
-- **010A**: Fuel Pressure (Kraftstoffdruck)
-- **0114**: O2 Sensor (Sauerstoffsensor)
-- Und viele weitere...
+### Port-Freigabe
 
-### Fehlercode-Interpretation
-Automatische Erfassung und Kategorisierung von DTC-Codes:
-- **P0xxx**: Powertrain (Motor, Getriebe)
-- **C0xxx**: Chassis (Bremsen, Aufhängung)
-- **B0xxx**: Body (Karosserie, Beleuchtung)
-- **U0xxx**: Network (Kommunikation)
+Der zu öffnende Port wird vom Browser gemeldet. Damit ein Client nicht
+beliebige Gerätedateien auf dem Server ansprechen kann, werden nur Ports aus
+`OBD_ALLOWED_PORTS` geöffnet:
 
-## 🔌 API-Endpoints
+```bash
+OBD_ALLOWED_PORTS=/dev/ttyUSB0,/dev/ttyACM0
+```
+
+Ist die Variable leer, ist der Hardwarezugriff deaktiviert; der
+Simulationsmodus funktioniert weiterhin.
+
+### Unterstützte PIDs
+
+`server/obd/protocol.ts` dekodiert unter anderem:
+
+| PID  | Messwert                        | Einheit |
+|------|---------------------------------|---------|
+| 0104 | Berechnete Motorlast            | %       |
+| 0105 | Kühlmitteltemperatur            | °C      |
+| 010A | Kraftstoffdruck                 | kPa     |
+| 010C | Motordrehzahl                   | rpm     |
+| 010D | Geschwindigkeit                 | km/h    |
+| 0110 | Luftmassenstrom                 | g/s     |
+| 0111 | Drosselklappenstellung          | %       |
+| 0114 | Lambdasonde (Bank 1, Sensor 1)  | V       |
+| 0142 | Steuergerätespannung            | V       |
+
+Die vollständige Liste liefert `obd.pids.list`.
+
+### Fehlercodes
+
+Mode-03-Antworten werden nach SAE J2012 dekodiert. Das erste Byte bestimmt
+Systemgruppe und erste Ziffer:
+
+- **P0xxx** Powertrain (Motor, Getriebe)
+- **C0xxx** Chassis (Bremsen, Fahrwerk)
+- **B0xxx** Body (Karosserie, Beleuchtung)
+- **U0xxx** Network (Kommunikation)
+
+## 🔌 API
+
+Alle Endpunkte laufen über tRPC unter `/api/trpc`. Jede Prozedur, die eine
+Fahrzeug- oder Diagnose-ID entgegennimmt, filtert die Abfrage auf den
+angemeldeten Nutzer — eine fremde ID ist von einer nicht existierenden nicht
+unterscheidbar.
 
 ### Fahrzeuge
-- `POST /api/trpc/obd.vehicles.create` - Neues Fahrzeug hinzufügen
-- `GET /api/trpc/obd.vehicles.list` - Alle Fahrzeuge auflisten
-- `GET /api/trpc/obd.vehicles.getById` - Fahrzeug nach ID abrufen
+- `obd.vehicles.create`, `obd.vehicles.list`, `obd.vehicles.getById`
+
+### Geräte
+- `obd.devices.create`, `obd.devices.list`, `obd.devices.availablePorts`
 
 ### Diagnosen
-- `POST /api/trpc/obd.diagnostics.start` - Diagnose starten
-- `GET /api/trpc/obd.diagnostics.getById` - Diagnose abrufen
-- `GET /api/trpc/obd.diagnostics.listByVehicle` - Diagnosen für Fahrzeug
-- `POST /api/trpc/obd.diagnostics.addParameter` - Parameter hinzufügen
-- `POST /api/trpc/obd.diagnostics.addErrorCode` - Fehlercode hinzufügen
-- `POST /api/trpc/obd.diagnostics.complete` - Diagnose abschließen
+- `obd.diagnostics.start`, `getById`, `listByVehicle`, `listRecent`
+- `obd.diagnostics.addParameter`, `getParameters`
+- `obd.diagnostics.addErrorCode`, `getErrorCodes`
+- `obd.diagnostics.complete`, `fail`, `cancel`
 
-### Mock-Simulation (für Tests ohne Hardware)
-- `POST /api/trpc/obd.mock.simulateDiagnostic` - Diagnose simulieren
+### KI-Analyse
+- `llm.status`, `llm.analyzeCode`, `llm.analyzeDiagnostic`
 
-## 📊 Diagnose-Workflow
+### Simulation
+- `obd.mock.simulateDiagnostic`
 
-1. **Fahrzeug auswählen** - Wählen Sie ein registriertes Fahrzeug
-2. **OBD-Gerät verbinden** - Verbinden Sie das OBD-Kabel mit dem Fahrzeug
-3. **Diagnose starten** - Initiieren Sie einen Scan (Full, Quick, oder Custom)
-4. **Daten erfassen** - Die Plattform liest Echtzeit-Parameter und Fehlercodes
-5. **Analyse durchführen** - KI-gestützte Interpretation der Fehler
-6. **Bericht generieren** - Erstellen Sie einen exportierbaren Diagnose-Bericht
+### Live-Streaming
+
+Socket.io unter `/api/socket.io`. Die Verbindung wird im Handshake über das
+Session-Cookie authentifiziert; nicht angemeldete Sockets werden abgewiesen.
+
+| Client → Server      | Nutzlast                                   |
+|----------------------|--------------------------------------------|
+| `diagnostic:start`   | `{ vehicleId, port, diagnosticId?, intervalMs? }` |
+| `diagnostic:stop`    | `{ sessionId }`                            |
+| `parameter:request`  | `{ sessionId, pid }`                       |
+| `errorcode:read`     | `{ sessionId }`                            |
+| `errorcode:clear`    | `{ sessionId, confirm: true }`             |
+
+Jedes Event wird mit einem Ack beantwortet (`{ ok: true }` oder
+`{ ok: false, error }`). Session-IDs vergibt der Server.
 
 ## 🔐 Sicherheit
 
-- **OAuth 2.0 Authentifizierung** für sichere Benutzer-Verwaltung
-- **Verschlüsselte Datenverbindung** zwischen Client und Server
-- **Datenschutz**: Alle Fahrzeug- und Diagnose-Daten sind benutzer-spezifisch
-- **Rollen-basierte Zugriffskontrolle** (User, Admin)
+- **OAuth 2.0** mit CSRF-Nonce im `state`-Parameter und Redirect-Whitelist
+- **Session** als HttpOnly-Cookie, JWT mit `appId`-Prüfung, 30 Tage Laufzeit
+- **Ownership-Filter in SQL** auf allen Fahrzeug- und Diagnose-Zugriffen
+- **Origin-Prüfung** vor jeder mutierenden Anfrage
+- **Port-Allowlist** für den seriellen Zugriff
+- **Zod-Validierung** aller tRPC- und Socket-Nutzlasten
+- **Rate-Limiting** der KI-Analyse pro Nutzer
+- **Bestätigungspflicht** vor dem Löschen des Fehlerspeichers
 
-## 📝 Lizenz
+### ⚠️ Löschen des Fehlerspeichers
 
-MIT License - siehe LICENSE Datei für Details
+`errorcode:clear` sendet OBD Mode 04. Das löscht neben den Fehlercodes auch
+Freeze-Frame-Daten und setzt die Readiness-Monitore zurück, die für die
+Abgasuntersuchung benötigt werden. Der Vorgang ist nicht umkehrbar; die
+Oberfläche verlangt deshalb eine ausdrückliche Bestätigung.
 
-## 🤝 Beitragen
+## 📊 Diagnose-Workflow
 
-Beiträge sind willkommen! Bitte erstellen Sie einen Pull Request mit:
-- Klarer Beschreibung der Änderungen
-- Tests für neue Features
-- Aktualisierte Dokumentation
+1. Fahrzeug im Dashboard anlegen
+2. OBD-Adapter anschließen, Port in `OBD_ALLOWED_PORTS` freigeben
+3. Diagnose starten — ohne Hardware übernimmt der Simulator
+4. Messwerte und Fehlercodes werden erfasst
+5. KI-Analyse für Ursachen und Reparaturvorschläge anstoßen
+6. Bericht als CSV exportieren
 
-## 📞 Support
+## 🧪 Entwicklung
 
-Bei Fragen oder Problemen:
-- Erstellen Sie ein Issue im Repository
-- Kontaktieren Sie das Support-Team
-- Konsultieren Sie die Dokumentation
+```bash
+pnpm dev              # Entwicklungsserver
+pnpm build            # Produktions-Build (Client + Server)
+pnpm start            # Produktionsserver
+
+pnpm check            # TypeScript
+pnpm lint             # ESLint
+pnpm lint:fix         # ESLint mit Autofix
+pnpm format           # Prettier
+pnpm test             # Tests einmalig
+pnpm test:watch       # Tests im Watch-Modus
+
+pnpm db:generate      # Migration aus dem Schema erzeugen
+pnpm db:migrate       # Migrationen anwenden
+pnpm db:push          # generate + migrate
+pnpm db:studio        # Drizzle Studio
+```
+
+### Tests
+
+Die Suite deckt vor allem die Stellen ab, an denen ein Fehler teuer wäre:
+
+- `protocol.test.ts` — PID- und DTC-Dekodierung gegen bekannte Bytefolgen
+- `obdRouter.ownership.test.ts` — jede Prozedur gegen fremde IDs, inklusive
+  der Prüfung, dass bei Ablehnung kein Schreibzugriff stattfindet
+- `csrf.test.ts` — Origin-Prüfung inklusive Präfix-Verwechslung
+- `rateLimit.test.ts`, `llmService.test.ts`, `report.test.ts`, `format.test.ts`
+
+### Datenhaltung
+
+`obdParameters` wächst im Livebetrieb am schnellsten (rund fünf Zeilen pro
+Sekunde je aktiver Sitzung). `pruneObdParameters(olderThan)` in `server/db.ts`
+löscht alte Messwerte; ein Aufrufer dafür ist noch nicht eingerichtet.
 
 ## 🔄 Roadmap
 
-### Phase 1: Basis-Funktionalität ✅
-- [x] OBD-Diagnose-Interface
-- [x] Fahrzeugverwaltung
-- [x] Fehlercode-Erfassung
-- [x] Benutzer-Authentifizierung
+### Umgesetzt
+- [x] OBD-Diagnose-Interface mit echter Protokolldekodierung
+- [x] Fahrzeugverwaltung und Diagnose-Verlauf
+- [x] Fehlercode-Erfassung und -Interpretation
+- [x] Benutzer-Authentifizierung und Zugriffskontrolle
+- [x] Live-Streaming über Socket.io
+- [x] KI-Analyse mit OpenRouter und LM Studio
+- [x] CSV-Berichtsexport
 
-### Phase 2: KI & Erweiterte Features 🚧
-- [ ] KI-gestützte Fehleranalyse
-- [ ] Anomalieerkennung
+### Offen
+- [ ] Anomalieerkennung über den Diagnoseverlauf
 - [ ] Predictive Maintenance
 - [ ] Natürlichsprachliche Abfragen
+- [ ] EdiabasLib-Integration für herstellerspezifische Diagnose
+- [ ] Flotten-Management
+- [ ] Mobile App
+- [ ] Aufräumjob für alte Messwerte
+- [ ] Deployment-Pipeline
 
-### Phase 3: Integration & Skalierung 📅
-- [ ] EdiabasLib Integration
-- [ ] Multi-Fahrzeug-Flotten-Management
-- [ ] Mobile App (iOS/Android)
-- [ ] Cloud-Synchronisation
+## 📝 Lizenz
 
-## 👨‍💻 Entwicklung
+MIT License
 
-### Projekt-Struktur
-```
-auto-ki-assistent/
-├── client/                 # Frontend (React)
-│   ├── src/
-│   │   ├── pages/         # Seiten (Home, Dashboard, Diagnostic)
-│   │   ├── components/    # UI-Komponenten
-│   │   └── const.ts       # Konfiguration
-│   └── public/            # Statische Assets
-├── server/                # Backend (Node.js)
-│   ├── _core/            # Kern-Module (Auth, Database, etc.)
-│   ├── obdRouter.ts      # OBD API Router
-│   ├── db.ts             # Datenbankfunktionen
-│   └── routers.ts        # tRPC Router
-├── drizzle/              # Datenbankschema
-│   └── schema.ts         # Drizzle ORM Schema
-└── README.md             # Diese Datei
-```
+## 🤝 Beitragen
 
-### Befehle
-```bash
-# Entwicklung
-pnpm dev              # Entwicklungsserver starten
-pnpm build            # Für Production bauen
-pnpm start            # Production Server starten
-
-# Datenbank
-pnpm db:push          # Schema zur DB pushen
-pnpm db:studio        # Drizzle Studio öffnen
-
-# Testing
-pnpm test             # Tests ausführen
-pnpm lint             # Code-Linting
-
-# Deployment
-pnpm docker:build     # Docker Image bauen
-```
-
-## 📚 Weitere Ressourcen
-
-- [OBD-II Spezifikation](https://en.wikipedia.org/wiki/OBD-II_PIDs)
-- [ELM327 Dokumentation](https://www.elmelectronics.com/)
-- [React Dokumentation](https://react.dev)
-- [Drizzle ORM Guide](https://orm.drizzle.team)
+Siehe [CONTRIBUTING.md](CONTRIBUTING.md). Vor einem Pull Request bitte
+`pnpm check`, `pnpm lint` und `pnpm test` ausführen.
 
 ---
 
-**Entwickelt mit ❤️ für Automechaniker und Fahrzeugbegeisterte**
-
-**Version**: 1.0.0  
-**Letztes Update**: November 2025
+**Entwickelt für Automechaniker und Fahrzeugbegeisterte**

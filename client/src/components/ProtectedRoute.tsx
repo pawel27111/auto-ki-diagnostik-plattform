@@ -14,13 +14,18 @@ import type { ReactNode } from "react";
  * protectedProcedure.
  */
 export default function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { loading, isAuthenticated } = useAuth({ redirectOnUnauthenticated: true });
+  const { loading, isAuthenticated } = useAuth({
+    redirectOnUnauthenticated: true,
+  });
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 to-blue-950">
         <div className="text-center">
-          <Loader2 className="h-10 w-10 text-blue-400 mx-auto animate-spin" aria-hidden="true" />
+          <Loader2
+            className="h-10 w-10 text-blue-400 mx-auto animate-spin"
+            aria-hidden="true"
+          />
           <p className="text-white mt-4">Lädt…</p>
         </div>
       </div>

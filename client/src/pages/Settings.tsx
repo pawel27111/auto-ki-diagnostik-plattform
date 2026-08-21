@@ -2,7 +2,13 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import AppNav from "@/components/AppNav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { formatDateTime } from "@/lib/format";
 import { trpc } from "@/lib/trpc";
 import { Cpu, LogOut, Usb } from "lucide-react";
@@ -43,7 +49,9 @@ export default function Settings() {
             </div>
             <div className="flex justify-between gap-4">
               <span className="text-blue-300">Rolle</span>
-              <Badge className="bg-blue-600/20 text-blue-300">{user?.role ?? "—"}</Badge>
+              <Badge className="bg-blue-600/20 text-blue-300">
+                {user?.role ?? "—"}
+              </Badge>
             </div>
             <div className="flex justify-between gap-4">
               <span className="text-blue-300">Anmeldeverfahren</span>
@@ -51,7 +59,9 @@ export default function Settings() {
             </div>
             <div className="flex justify-between gap-4">
               <span className="text-blue-300">Zuletzt angemeldet</span>
-              <span className="text-white">{formatDateTime(user?.lastSignedIn)}</span>
+              <span className="text-white">
+                {formatDateTime(user?.lastSignedIn)}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -71,13 +81,15 @@ export default function Settings() {
               <p className="text-blue-300">Wird geladen…</p>
             ) : llmStatus.data?.available ? (
               <p className="text-green-300">
-                Aktiv — Anbieter: <span className="font-mono">{llmStatus.data.provider}</span>
+                Aktiv — Anbieter:{" "}
+                <span className="font-mono">{llmStatus.data.provider}</span>
               </p>
             ) : (
               <p className="text-blue-200">
-                Kein Anbieter konfiguriert. Setzen Sie <code className="font-mono">OPENROUTER_API_KEY</code>{" "}
-                oder <code className="font-mono">LMSTUDIO_BASE_URL</code>. Ohne Anbieter werden
-                hinterlegte Standardhinweise verwendet.
+                Kein Anbieter konfiguriert. Setzen Sie{" "}
+                <code className="font-mono">OPENROUTER_API_KEY</code> oder{" "}
+                <code className="font-mono">LMSTUDIO_BASE_URL</code>. Ohne
+                Anbieter werden hinterlegte Standardhinweise verwendet.
               </p>
             )}
           </CardContent>
@@ -98,14 +110,20 @@ export default function Settings() {
               <p className="text-blue-300">Wird geladen…</p>
             ) : (ports.data?.length ?? 0) === 0 ? (
               <p className="text-blue-200">
-                Keine Ports freigegeben. Setzen Sie <code className="font-mono">OBD_ALLOWED_PORTS</code>{" "}
-                in der Serverkonfiguration.
+                Keine Ports freigegeben. Setzen Sie{" "}
+                <code className="font-mono">OBD_ALLOWED_PORTS</code> in der
+                Serverkonfiguration.
               </p>
             ) : (
               <ul className="space-y-2">
                 {ports.data?.map(port => (
-                  <li key={port.path} className="flex items-center justify-between gap-3">
-                    <span className="text-white font-mono break-all">{port.path}</span>
+                  <li
+                    key={port.path}
+                    className="flex items-center justify-between gap-3"
+                  >
+                    <span className="text-white font-mono break-all">
+                      {port.path}
+                    </span>
                     <Badge
                       className={
                         port.isPresent

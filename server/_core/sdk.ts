@@ -18,6 +18,13 @@ import type {
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0;
 
+/**
+ * The OAuth server returns `platform` on some responses and `platforms` on
+ * others depending on the account type, and neither is in the generated type.
+ * Reading them through this shape keeps the access typed instead of `any`.
+ */
+type PlatformFields = { platform?: string | null; platforms?: unknown };
+
 export type SessionPayload = {
   openId: string;
   appId: string;
@@ -139,12 +146,13 @@ class SDKServer {
     const data = await this.oauthService.getUserInfoByToken({
       accessToken,
     } as ExchangeTokenResponse);
+    const extra = data as GetUserInfoResponse & PlatformFields;
     const loginMethod = this.deriveLoginMethod(
-      (data as any)?.platforms,
-      (data as any)?.platform ?? data.platform ?? null
+      extra.platforms,
+      extra.platform ?? null
     );
     return {
-      ...(data as any),
+      ...data,
       platform: loginMethod,
       loginMethod,
     } as GetUserInfoResponse;
@@ -257,12 +265,13 @@ class SDKServer {
       payload
     );
 
+    const extra = data as GetUserInfoWithJwtResponse & PlatformFields;
     const loginMethod = this.deriveLoginMethod(
-      (data as any)?.platforms,
-      (data as any)?.platform ?? data.platform ?? null
+      extra.platforms,
+      extra.platform ?? null
     );
     return {
-      ...(data as any),
+      ...data,
       platform: loginMethod,
       loginMethod,
     } as GetUserInfoWithJwtResponse;

@@ -40,7 +40,9 @@ async function requireDb() {
  * inserts. Callers need the generated primary key, so unwrap it here rather
  * than making every call site know the driver shape.
  */
-function insertedId(result: { insertId: number }[] | readonly unknown[]): number {
+function insertedId(
+  result: { insertId: number }[] | readonly unknown[]
+): number {
   const header = (result as { insertId?: number }[])[0];
   const id = header?.insertId;
   if (typeof id !== "number" || id <= 0) {
@@ -120,7 +122,10 @@ export async function upsertUser(user: InsertUser): Promise<void> {
  * per user. The WHERE clause makes this a no-op write rather than a read
  * followed by a conditional write, so concurrent requests cannot race.
  */
-export async function touchLastSignedIn(userId: number, now = new Date()): Promise<void> {
+export async function touchLastSignedIn(
+  userId: number,
+  now = new Date()
+): Promise<void> {
   const db = await getDb();
   if (!db) return;
 
@@ -129,7 +134,9 @@ export async function touchLastSignedIn(userId: number, now = new Date()): Promi
     await db
       .update(users)
       .set({ lastSignedIn: now })
-      .where(and(eq(users.id, userId), sql`${users.lastSignedIn} < ${threshold}`));
+      .where(
+        and(eq(users.id, userId), sql`${users.lastSignedIn} < ${threshold}`)
+      );
   } catch (error) {
     // A failed timestamp refresh must never break an otherwise valid request.
     console.warn("[Database] Failed to refresh lastSignedIn:", error);
@@ -143,7 +150,11 @@ export async function getUserByOpenId(openId: string) {
     return undefined;
   }
 
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.openId, openId))
+    .limit(1);
 
   return result.length > 0 ? result[0] : undefined;
 }
@@ -169,14 +180,22 @@ export async function getUserVehicles(userId: number) {
   const db = await getDb();
   if (!db) return [];
 
-  return db.select().from(vehicles).where(eq(vehicles.userId, userId)).orderBy(desc(vehicles.createdAt));
+  return db
+    .select()
+    .from(vehicles)
+    .where(eq(vehicles.userId, userId))
+    .orderBy(desc(vehicles.createdAt));
 }
 
 export async function getVehicleById(vehicleId: number) {
   const db = await getDb();
   if (!db) return undefined;
 
-  const result = await db.select().from(vehicles).where(eq(vehicles.id, vehicleId)).limit(1);
+  const result = await db
+    .select()
+    .from(vehicles)
+    .where(eq(vehicles.id, vehicleId))
+    .limit(1);
   return result.length > 0 ? result[0] : undefined;
 }
 
@@ -187,7 +206,10 @@ export async function getVehicleById(vehicleId: number) {
  * so a caller cannot forget to compare and cannot observe that an id exists
  * for somebody else.
  */
-export async function getOwnedVehicle(userId: number, vehicleId: number): Promise<Vehicle | undefined> {
+export async function getOwnedVehicle(
+  userId: number,
+  vehicleId: number
+): Promise<Vehicle | undefined> {
   const db = await getDb();
   if (!db) return undefined;
 
@@ -199,9 +221,15 @@ export async function getOwnedVehicle(userId: number, vehicleId: number): Promis
   return result.length > 0 ? result[0] : undefined;
 }
 
-export async function updateVehicleDiagnosisTimestamp(vehicleId: number, at = new Date()) {
+export async function updateVehicleDiagnosisTimestamp(
+  vehicleId: number,
+  at = new Date()
+) {
   const db = await requireDb();
-  return db.update(vehicles).set({ lastDiagnosisAt: at }).where(eq(vehicles.id, vehicleId));
+  return db
+    .update(vehicles)
+    .set({ lastDiagnosisAt: at })
+    .where(eq(vehicles.id, vehicleId));
 }
 
 // OBD Device queries
@@ -252,7 +280,11 @@ export async function getDiagnosticById(diagnosticId: number) {
   const db = await getDb();
   if (!db) return undefined;
 
-  const result = await db.select().from(diagnostics).where(eq(diagnostics.id, diagnosticId)).limit(1);
+  const result = await db
+    .select()
+    .from(diagnostics)
+    .where(eq(diagnostics.id, diagnosticId))
+    .limit(1);
   return result.length > 0 ? result[0] : undefined;
 }
 
@@ -273,7 +305,9 @@ export async function getOwnedDiagnostic(
   const result = await db
     .select()
     .from(diagnostics)
-    .where(and(eq(diagnostics.id, diagnosticId), eq(diagnostics.userId, userId)))
+    .where(
+      and(eq(diagnostics.id, diagnosticId), eq(diagnostics.userId, userId))
+    )
     .limit(1);
   return result.length > 0 ? result[0] : undefined;
 }
@@ -329,7 +363,10 @@ export async function updateDiagnosticStatus(
     updateData.completedAt = new Date();
   }
 
-  return db.update(diagnostics).set(updateData).where(eq(diagnostics.id, diagnosticId));
+  return db
+    .update(diagnostics)
+    .set(updateData)
+    .where(eq(diagnostics.id, diagnosticId));
 }
 
 // Error Code queries
@@ -349,7 +386,10 @@ export async function getDiagnosticErrorCodes(diagnosticId: number) {
   const db = await getDb();
   if (!db) return [];
 
-  return db.select().from(errorCodes).where(eq(errorCodes.diagnosticId, diagnosticId));
+  return db
+    .select()
+    .from(errorCodes)
+    .where(eq(errorCodes.diagnosticId, diagnosticId));
 }
 
 // OBD Parameter queries
@@ -405,5 +445,7 @@ export async function getDiagnosticParameters(diagnosticId: number) {
 export async function pruneObdParameters(olderThan: Date): Promise<void> {
   const db = await getDb();
   if (!db) return;
-  await db.delete(obdParameters).where(sql`${obdParameters.timestamp} < ${olderThan}`);
+  await db
+    .delete(obdParameters)
+    .where(sql`${obdParameters.timestamp} < ${olderThan}`);
 }

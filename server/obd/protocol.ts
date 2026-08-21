@@ -167,9 +167,14 @@ export function getPidDefinition(pid: string): PidDefinition | undefined {
   return PID_DEFINITIONS[pid.toUpperCase()];
 }
 
-export function isNormalReading(definition: PidDefinition, value: number): boolean {
+export function isNormalReading(
+  definition: PidDefinition,
+  value: number
+): boolean {
   if (!definition.normalRange) return true;
-  return value >= definition.normalRange.min && value <= definition.normalRange.max;
+  return (
+    value >= definition.normalRange.min && value <= definition.normalRange.max
+  );
 }
 
 /** Round to at most 4 decimals — the precision the parameter column stores. */
@@ -222,7 +227,9 @@ const ELM_ERROR_RESPONSES = [
 
 export function findElmError(response: string): string | null {
   const upper = response.toUpperCase();
-  return ELM_ERROR_RESPONSES.find(candidate => upper.includes(candidate)) ?? null;
+  return (
+    ELM_ERROR_RESPONSES.find(candidate => upper.includes(candidate)) ?? null
+  );
 }
 
 /**
@@ -232,7 +239,10 @@ export function findElmError(response: string): string | null {
  * whether or not CAN headers are enabled, and returns null when the ECU had
  * nothing to report.
  */
-export function decodeMode01Response(pid: string, response: string): number | null {
+export function decodeMode01Response(
+  pid: string,
+  response: string
+): number | null {
   const elmError = findElmError(response);
   if (elmError) {
     throw new ObdProtocolError(`Adapter returned "${elmError}" for PID ${pid}`);
@@ -323,7 +333,9 @@ export function decodeMode03Response(
   const elmError = findElmError(response);
   if (elmError) {
     if (elmError === "NO DATA") return []; // no stored codes is a valid answer
-    throw new ObdProtocolError(`Adapter returned "${elmError}" while reading DTCs`);
+    throw new ObdProtocolError(
+      `Adapter returned "${elmError}" while reading DTCs`
+    );
   }
 
   const bytes = extractHexBytes(response);
@@ -338,7 +350,11 @@ export function decodeMode03Response(
     const payload = bytes.slice(cursor + 1);
     const declared = (candidate ?? 0) * 2;
     const restIsPadding = payload.slice(declared).every(byte => byte === 0x00);
-    if (candidate !== undefined && declared <= payload.length && restIsPadding) {
+    if (
+      candidate !== undefined &&
+      declared <= payload.length &&
+      restIsPadding
+    ) {
       cursor += 1;
     }
   }
@@ -360,7 +376,15 @@ export function decodeMode03Response(
  * Deliberately conservative: it is the floor the UI can rely on when the LLM is
  * unavailable, not a diagnosis.
  */
-const CRITICAL_CODES = new Set(["P0300", "P0301", "P0302", "P0303", "P0304", "P0606", "P0335"]);
+const CRITICAL_CODES = new Set([
+  "P0300",
+  "P0301",
+  "P0302",
+  "P0303",
+  "P0304",
+  "P0606",
+  "P0335",
+]);
 const ERROR_CODES_SET = new Set(["P0420", "P0430", "P0171", "P0172", "P0128"]);
 
 export function severityForCode(code: string): Severity {

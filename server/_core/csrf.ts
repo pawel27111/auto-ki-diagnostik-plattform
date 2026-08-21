@@ -39,14 +39,23 @@ function originOf(value: string | undefined): string | null {
   }
 }
 
-export function requireSameOrigin(req: Request, res: Response, next: NextFunction): void {
+export function requireSameOrigin(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
   // Safe methods do not change state, so they do not need the check.
-  if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") {
+  if (
+    req.method === "GET" ||
+    req.method === "HEAD" ||
+    req.method === "OPTIONS"
+  ) {
     next();
     return;
   }
 
-  const candidate = originOf(req.headers.origin) ?? originOf(req.headers.referer);
+  const candidate =
+    originOf(req.headers.origin) ?? originOf(req.headers.referer);
 
   if (!candidate) {
     // Browsers always send one of the two on a cross-origin mutation. Absence
@@ -61,7 +70,9 @@ export function requireSameOrigin(req: Request, res: Response, next: NextFunctio
   }
 
   if (!allowedOrigins(req).has(candidate)) {
-    console.warn(`[CSRF] Rejected ${req.method} ${req.path} from origin ${candidate}`);
+    console.warn(
+      `[CSRF] Rejected ${req.method} ${req.path} from origin ${candidate}`
+    );
     res.status(403).json({ error: "Cross-origin request rejected" });
     return;
   }

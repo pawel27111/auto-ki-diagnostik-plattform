@@ -1,9 +1,17 @@
-import { OAUTH_STATE_COOKIE, OAUTH_STATE_TTL_MS, SESSION_TTL_MS } from "@shared/const";
+import {
+  OAUTH_STATE_COOKIE,
+  OAUTH_STATE_TTL_MS,
+  SESSION_TTL_MS,
+} from "@shared/const";
 import { COOKIE_NAME } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import { randomUUID } from "node:crypto";
 import * as db from "../db";
-import { getOAuthStateCookieOptions, getSessionCookieOptions, isSecureRequest } from "./cookies";
+import {
+  getOAuthStateCookieOptions,
+  getSessionCookieOptions,
+  isSecureRequest,
+} from "./cookies";
 import { ENV } from "./env";
 import { sdk } from "./sdk";
 
@@ -14,7 +22,9 @@ function getQueryParam(req: Request, key: string): string | undefined {
 
 function currentOrigin(req: Request): string {
   const forwardedHost = req.headers["x-forwarded-host"];
-  const host = (typeof forwardedHost === "string" ? forwardedHost : req.headers.host) ?? "";
+  const host =
+    (typeof forwardedHost === "string" ? forwardedHost : req.headers.host) ??
+    "";
   const proto = isSecureRequest(req) ? "https" : "http";
   return `${proto}://${host}`;
 }
@@ -39,7 +49,9 @@ function encodeState(state: OAuthState): string {
 
 function decodeState(raw: string): OAuthState | null {
   try {
-    const parsed = JSON.parse(Buffer.from(raw, "base64url").toString("utf8")) as unknown;
+    const parsed = JSON.parse(
+      Buffer.from(raw, "base64url").toString("utf8")
+    ) as unknown;
     if (
       typeof parsed !== "object" ||
       parsed === null ||
@@ -112,7 +124,13 @@ export function registerOAuthRoutes(app: Express) {
     res.redirect(302, url.toString());
   });
 
-  app.get("/api/oauth/callback", async (req: Request, res: Response) => {
+  // Express 4 does not await handlers, so a rejected promise would be an
+  // unhandled rejection rather than a 500. The body is wrapped accordingly.
+  app.get("/api/oauth/callback", (req: Request, res: Response) => {
+    void handleCallback(req, res);
+  });
+
+  async function handleCallback(req: Request, res: Response): Promise<void> {
     const code = getQueryParam(req, "code");
     const rawState = getQueryParam(req, "state");
 
@@ -132,9 +150,14 @@ export function registerOAuthRoutes(app: Express) {
       .map(part => part.trim().split("="))
       .find(([name]) => name === OAUTH_STATE_COOKIE)?.[1];
 
-    if (!expectedNonce || !safeEqual(decodeURIComponent(expectedNonce), state.nonce)) {
+    if (
+      !expectedNonce ||
+      !safeEqual(decodeURIComponent(expectedNonce), state.nonce)
+    ) {
       console.warn("[OAuth] State nonce mismatch — rejecting callback");
-      res.status(403).json({ error: "Invalid or expired login attempt. Please try again." });
+      res
+        .status(403)
+        .json({ error: "Invalid or expired login attempt. Please try again." });
       return;
     }
 
@@ -148,7 +171,10 @@ export function registerOAuthRoutes(app: Express) {
     }
 
     try {
-      const tokenResponse = await sdk.exchangeCodeForToken(code, state.redirectUri);
+      const tokenResponse = await sdk.exchangeCodeForToken(
+        code,
+        state.redirectUri
+      );
       const userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
 
       if (!userInfo.openId) {
@@ -170,12 +196,15 @@ export function registerOAuthRoutes(app: Express) {
       });
 
       const cookieOptions = getSessionCookieOptions(req);
-      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: SESSION_TTL_MS });
+      res.cookie(COOKIE_NAME, sessionToken, {
+        ...cookieOptions,
+        maxAge: SESSION_TTL_MS,
+      });
 
       res.redirect(302, "/dashboard");
     } catch (error) {
       console.error("[OAuth] Callback failed", error);
       res.status(500).json({ error: "OAuth callback failed" });
     }
-  });
+  }
 }

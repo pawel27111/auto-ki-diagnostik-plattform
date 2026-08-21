@@ -46,7 +46,9 @@ type AckResult = { ok: true; data?: unknown } | { ok: false; error: string };
 export function useOBDStreaming() {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [activeSession, setActiveSession] = useState<DiagnosticSession | null>(null);
+  const [activeSession, setActiveSession] = useState<DiagnosticSession | null>(
+    null
+  );
   const [parameters, setParameters] = useState<OBDParameter[]>([]);
   const [errorCodes, setErrorCodes] = useState<OBDError[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -90,14 +92,18 @@ export function useOBDStreaming() {
     socket.on("parameter:update", (data: { parameter: OBDParameter }) => {
       setParameters(prev => {
         const next = [...prev, data.parameter];
-        return next.length > MAX_PARAMETERS ? next.slice(-MAX_PARAMETERS) : next;
+        return next.length > MAX_PARAMETERS
+          ? next.slice(-MAX_PARAMETERS)
+          : next;
       });
     });
 
     socket.on("parameter:response", (data: { parameter: OBDParameter }) => {
       setParameters(prev => {
         const next = [...prev, data.parameter];
-        return next.length > MAX_PARAMETERS ? next.slice(-MAX_PARAMETERS) : next;
+        return next.length > MAX_PARAMETERS
+          ? next.slice(-MAX_PARAMETERS)
+          : next;
       });
     });
 
@@ -113,16 +119,19 @@ export function useOBDStreaming() {
       setErrorCodes([]);
     });
 
-    socket.on("diagnostic:started", (data: { sessionId: string; port: string; vehicleId: number }) => {
-      setActiveSession({
-        id: data.sessionId,
-        vehicleId: data.vehicleId,
-        port: data.port,
-        isActive: true,
-      });
-      setParameters([]);
-      setErrorCodes([]);
-    });
+    socket.on(
+      "diagnostic:started",
+      (data: { sessionId: string; port: string; vehicleId: number }) => {
+        setActiveSession({
+          id: data.sessionId,
+          vehicleId: data.vehicleId,
+          port: data.port,
+          isActive: true,
+        });
+        setParameters([]);
+        setErrorCodes([]);
+      }
+    );
 
     socket.on("diagnostic:stopped", () => {
       setActiveSession(prev => (prev ? { ...prev, isActive: false } : null));
@@ -143,23 +152,33 @@ export function useOBDStreaming() {
    * Every handler answers with an ack, so a failure surfaces at the call site
    * instead of only as a stray `error` event with no link to what caused it.
    */
-  const emit = useCallback((event: string, payload: Record<string, unknown>): Promise<AckResult> => {
-    const socket = socketRef.current;
-    if (!socket || !socket.connected) {
-      return Promise.resolve({ ok: false, error: "Keine Verbindung zum Server" });
-    }
+  const emit = useCallback(
+    (event: string, payload: Record<string, unknown>): Promise<AckResult> => {
+      const socket = socketRef.current;
+      if (!socket || !socket.connected) {
+        return Promise.resolve({
+          ok: false,
+          error: "Keine Verbindung zum Server",
+        });
+      }
 
-    return new Promise<AckResult>(resolve => {
-      const timeout = setTimeout(
-        () => resolve({ ok: false, error: "Zeitüberschreitung — der Server hat nicht geantwortet" }),
-        15_000
-      );
-      socket.emit(event, payload, (result: AckResult) => {
-        clearTimeout(timeout);
-        resolve(result ?? { ok: false, error: "Leere Antwort vom Server" });
+      return new Promise<AckResult>(resolve => {
+        const timeout = setTimeout(
+          () =>
+            resolve({
+              ok: false,
+              error: "Zeitüberschreitung — der Server hat nicht geantwortet",
+            }),
+          15_000
+        );
+        socket.emit(event, payload, (result: AckResult) => {
+          clearTimeout(timeout);
+          resolve(result ?? { ok: false, error: "Leere Antwort vom Server" });
+        });
       });
-    });
-  }, []);
+    },
+    []
+  );
 
   const run = useCallback(
     async (event: string, payload: Record<string, unknown>) => {
@@ -211,7 +230,10 @@ export function useOBDStreaming() {
    */
   const clearErrorCodes = useCallback(() => {
     if (!activeSession) return Promise.resolve(false);
-    return run("errorcode:clear", { sessionId: activeSession.id, confirm: true });
+    return run("errorcode:clear", {
+      sessionId: activeSession.id,
+      confirm: true,
+    });
   }, [activeSession, run]);
 
   return {

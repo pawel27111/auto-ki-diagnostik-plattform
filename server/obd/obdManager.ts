@@ -97,11 +97,21 @@ export class OBDManager extends EventEmitter {
       throw new Error(`Port ${port} is already connected`);
     }
 
-    const serialPort = new SerialPort({ path: port, baudRate, autoOpen: false });
+    const serialPort = new SerialPort({
+      path: port,
+      baudRate,
+      autoOpen: false,
+    });
 
     const connection: Connection = {
       serialPort,
-      state: { port, baudRate, type, isConnected: false, lastUpdate: new Date() },
+      state: {
+        port,
+        baudRate,
+        type,
+        isConnected: false,
+        lastUpdate: new Date(),
+      },
       buffer: "",
       queue: [],
       inFlight: null,
@@ -109,7 +119,9 @@ export class OBDManager extends EventEmitter {
       countByte: type === "dcan" ? "present" : "auto",
     };
 
-    serialPort.on("data", chunk => this.handleData(port, chunk.toString("ascii")));
+    serialPort.on("data", chunk =>
+      this.handleData(port, chunk.toString("ascii"))
+    );
     serialPort.on("error", error => {
       console.error(`[OBD] Error on ${port}:`, error);
       this.emit("error", { port, error: error.message });
@@ -141,7 +153,10 @@ export class OBDManager extends EventEmitter {
       return true;
     } catch (error) {
       this.connections.delete(port);
-      this.failAllPending(port, error instanceof Error ? error : new Error(String(error)));
+      this.failAllPending(
+        port,
+        error instanceof Error ? error : new Error(String(error))
+      );
       if (serialPort.isOpen) {
         await new Promise<void>(resolve => serialPort.close(() => resolve()));
       }
@@ -158,7 +173,10 @@ export class OBDManager extends EventEmitter {
    * The previous implementation fired these on staggered `setTimeout`s without
    * reading the replies, so a device that was still busy silently dropped them.
    */
-  private async initializeDevice(port: string, type: DeviceType): Promise<void> {
+  private async initializeDevice(
+    port: string,
+    type: DeviceType
+  ): Promise<void> {
     const commands: { cmd: string; timeoutMs?: number }[] = [
       { cmd: "ATZ", timeoutMs: RESET_TIMEOUT_MS }, // reset
       { cmd: "ATE0" }, // echo off
@@ -184,7 +202,11 @@ export class OBDManager extends EventEmitter {
    * Serialising per port is what makes concurrent reads correct: an ELM327 has
    * no request ids, so two commands in flight at once cannot be told apart.
    */
-  sendCommand(port: string, command: string, timeoutMs = DEFAULT_COMMAND_TIMEOUT_MS): Promise<string> {
+  sendCommand(
+    port: string,
+    command: string,
+    timeoutMs = DEFAULT_COMMAND_TIMEOUT_MS
+  ): Promise<string> {
     const connection = this.connections.get(port);
     if (!connection || !connection.serialPort.isOpen) {
       return Promise.reject(new Error(`Port ${port} is not open`));
@@ -207,7 +229,12 @@ export class OBDManager extends EventEmitter {
     connection.buffer = "";
 
     connection.timer = setTimeout(() => {
-      this.settleInFlight(port, new Error(`Timed out after ${next.timeoutMs}ms waiting for "${next.command}"`));
+      this.settleInFlight(
+        port,
+        new Error(
+          `Timed out after ${next.timeoutMs}ms waiting for "${next.command}"`
+        )
+      );
     }, next.timeoutMs);
 
     connection.serialPort.write(`${next.command}\r`, error => {
@@ -223,7 +250,10 @@ export class OBDManager extends EventEmitter {
    * Every exit path for a command goes through here, so the timer is always
    * cleared and the queue never stalls.
    */
-  private settleInFlight(port: string, errorOrResponse: Error | { response: string }): void {
+  private settleInFlight(
+    port: string,
+    errorOrResponse: Error | { response: string }
+  ): void {
     const connection = this.connections.get(port);
     if (!connection) return;
 
@@ -254,7 +284,9 @@ export class OBDManager extends EventEmitter {
       clearTimeout(connection.timer);
       connection.timer = null;
     }
-    const pending = connection.inFlight ? [connection.inFlight, ...connection.queue] : [...connection.queue];
+    const pending = connection.inFlight
+      ? [connection.inFlight, ...connection.queue]
+      : [...connection.queue];
     connection.inFlight = null;
     connection.queue = [];
     connection.buffer = "";
@@ -298,7 +330,10 @@ export class OBDManager extends EventEmitter {
    * Returns null when the ECU does not report the PID; throws when the adapter
    * or the transport fails, so callers can tell "not supported" from "broken".
    */
-  async requestParameter(port: string, pid: string): Promise<OBDParameter | null> {
+  async requestParameter(
+    port: string,
+    pid: string
+  ): Promise<OBDParameter | null> {
     const definition = getPidDefinition(pid);
     if (!definition) {
       throw new ObdProtocolError(`Unsupported PID ${pid}`);
@@ -326,13 +361,19 @@ export class OBDManager extends EventEmitter {
    * to the command timeout each can take longer than the interval, and stacking
    * cycles would queue commands faster than the adapter can answer them.
    */
-  startScanning(port: string, intervalMs: number = 1000, pids: readonly string[] = DEFAULT_SCAN_PIDS): void {
+  startScanning(
+    port: string,
+    intervalMs: number = 1000,
+    pids: readonly string[] = DEFAULT_SCAN_PIDS
+  ): void {
     if (this.scanTimers.has(port)) {
       console.warn(`[OBD] Scanning already active on ${port}`);
       return;
     }
 
-    const timer = setInterval(async () => {
+    // setInterval ignores the returned promise, so the cycle is wrapped in a
+    // void call and every rejection is handled inside runCycle.
+    const runCycle = async () => {
       const connection = this.connections.get(port);
       if (!connection || !connection.state.isConnected) {
         this.stopScanning(port);
@@ -358,10 +399,14 @@ export class OBDManager extends EventEmitter {
       } finally {
         this.scanning.delete(port);
       }
-    }, intervalMs);
+    };
+
+    const timer = setInterval(() => void runCycle(), intervalMs);
 
     this.scanTimers.set(port, timer);
-    console.log(`[OBD] Started scanning on ${port} (interval: ${intervalMs}ms)`);
+    console.log(
+      `[OBD] Started scanning on ${port} (interval: ${intervalMs}ms)`
+    );
   }
 
   stopScanning(port: string): void {
@@ -383,7 +428,9 @@ export class OBDManager extends EventEmitter {
     this.failAllPending(port, new Error("Device disconnected"));
 
     if (connection.serialPort.isOpen) {
-      await new Promise<void>(resolve => connection.serialPort.close(() => resolve()));
+      await new Promise<void>(resolve =>
+        connection.serialPort.close(() => resolve())
+      );
     }
     connection.serialPort.removeAllListeners();
     this.connections.delete(port);
@@ -391,13 +438,22 @@ export class OBDManager extends EventEmitter {
 
   /** Close every open port. Used on server shutdown. */
   async disconnectAll(): Promise<void> {
-    await Promise.all(Array.from(this.connections.keys()).map(port => this.disconnectDevice(port)));
+    await Promise.all(
+      Array.from(this.connections.keys()).map(port =>
+        this.disconnectDevice(port)
+      )
+    );
   }
 
-  async getAvailablePorts(): Promise<{ path: string; manufacturer?: string }[]> {
+  async getAvailablePorts(): Promise<
+    { path: string; manufacturer?: string }[]
+  > {
     try {
       const ports = await SerialPort.list();
-      return ports.map(port => ({ path: port.path, manufacturer: port.manufacturer }));
+      return ports.map(port => ({
+        path: port.path,
+        manufacturer: port.manufacturer,
+      }));
     } catch (error) {
       console.error("[OBD] Error listing ports:", error);
       return [];
@@ -409,7 +465,9 @@ export class OBDManager extends EventEmitter {
   }
 
   getAllConnections(): OBDDevice[] {
-    return Array.from(this.connections.values()).map(connection => connection.state);
+    return Array.from(this.connections.values()).map(
+      connection => connection.state
+    );
   }
 
   /** Read stored diagnostic trouble codes (Mode 03). */
@@ -420,7 +478,9 @@ export class OBDManager extends EventEmitter {
     }
 
     const response = await this.sendCommand(port, "03");
-    const decoded = decodeMode03Response(response, { countByte: connection.countByte });
+    const decoded = decodeMode03Response(response, {
+      countByte: connection.countByte,
+    });
 
     return decoded.map(({ code, system }) => ({
       code,

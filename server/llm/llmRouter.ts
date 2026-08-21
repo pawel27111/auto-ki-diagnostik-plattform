@@ -23,7 +23,10 @@ const dtcSchema = z
   .string()
   .trim()
   .toUpperCase()
-  .regex(/^[PCBU][0-3][0-9A-F]{3}$/, "Not a valid OBD-II diagnostic trouble code");
+  .regex(
+    /^[PCBU][0-3][0-9A-F]{3}$/,
+    "Not a valid OBD-II diagnostic trouble code"
+  );
 
 function enforceRateLimit(userId: number): void {
   const { allowed, retryAfterSeconds } = analysisLimiter.check(`llm:${userId}`);
@@ -54,7 +57,10 @@ export const llmRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       enforceRateLimit(ctx.user.id);
-      return getLLMService().analyzeErrorCode(input.code, input.description ?? "");
+      return getLLMService().analyzeErrorCode(
+        input.code,
+        input.description ?? ""
+      );
     }),
 
   /**
@@ -66,9 +72,15 @@ export const llmRouter = router({
   analyzeDiagnostic: protectedProcedure
     .input(z.object({ diagnosticId: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
-      const diagnostic = await db.getOwnedDiagnostic(ctx.user.id, input.diagnosticId);
+      const diagnostic = await db.getOwnedDiagnostic(
+        ctx.user.id,
+        input.diagnosticId
+      );
       if (!diagnostic) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Diagnostic not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Diagnostic not found",
+        });
       }
 
       const codes = await db.getDiagnosticErrorCodes(input.diagnosticId);
@@ -82,7 +94,9 @@ export const llmRouter = router({
       const analyses = [];
       for (const code of codes) {
         enforceRateLimit(ctx.user.id);
-        analyses.push(await service.analyzeErrorCode(code.code, code.description ?? ""));
+        analyses.push(
+          await service.analyzeErrorCode(code.code, code.description ?? "")
+        );
       }
 
       return { analyses };

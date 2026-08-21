@@ -9,7 +9,13 @@ import { Link } from "wouter";
  * Shared top bar. Previously each page duplicated this markup, which is how
  * the settings link ended up pointing at a route that did not exist.
  */
-export default function AppNav({ title, actions }: { title: string; actions?: ReactNode }) {
+export default function AppNav({
+  title,
+  actions,
+}: {
+  title: string;
+  actions?: ReactNode;
+}) {
   const { user, logout } = useAuth();
 
   return (

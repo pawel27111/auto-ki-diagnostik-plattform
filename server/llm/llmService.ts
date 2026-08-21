@@ -117,7 +117,8 @@ export class LLMService {
           "X-Title": "AutoKI Assistent",
         },
       });
-      this.models.openrouter = config.openrouter.model || DEFAULT_OPENROUTER_MODEL;
+      this.models.openrouter =
+        config.openrouter.model || DEFAULT_OPENROUTER_MODEL;
     }
 
     if (config.lmstudio?.baseUrl) {
@@ -159,12 +160,17 @@ export class LLMService {
    * Analyse a trouble code, falling back through the configured providers and
    * finally to the static catalogue. Never throws.
    */
-  async analyzeErrorCode(code: string, description = ""): Promise<ErrorAnalysis> {
+  async analyzeErrorCode(
+    code: string,
+    description = ""
+  ): Promise<ErrorAnalysis> {
     // Try the active provider first, then any other configured one. The old
     // implementation only fell back in the OpenRouter -> LM Studio direction.
     const order: LLMProvider[] = [
       this.activeProvider,
-      ...(["openrouter", "lmstudio"] as LLMProvider[]).filter(p => p !== this.activeProvider),
+      ...(["openrouter", "lmstudio"] as LLMProvider[]).filter(
+        p => p !== this.activeProvider
+      ),
     ];
 
     for (const provider of order) {
@@ -229,12 +235,23 @@ export class LLMService {
    * Merge the rule-based severity for a code with the model's urgency, keeping
    * whichever is more serious.
    */
-  private combineSeverity(code: string, urgency: ErrorAnalysis["urgency"]): Severity {
+  private combineSeverity(
+    code: string,
+    urgency: ErrorAnalysis["urgency"]
+  ): Severity {
     const ranking: Severity[] = ["info", "warning", "error", "critical"];
     const fromUrgency: Severity =
-      urgency === "critical" ? "critical" : urgency === "high" ? "error" : urgency === "medium" ? "warning" : "info";
+      urgency === "critical"
+        ? "critical"
+        : urgency === "high"
+          ? "error"
+          : urgency === "medium"
+            ? "warning"
+            : "info";
     const fromCode = severityForCode(code);
-    return ranking.indexOf(fromUrgency) > ranking.indexOf(fromCode) ? fromUrgency : fromCode;
+    return ranking.indexOf(fromUrgency) > ranking.indexOf(fromCode)
+      ? fromUrgency
+      : fromCode;
   }
 
   /**
@@ -250,7 +267,8 @@ export class LLMService {
       code: normalized,
       description,
       severity: severityForCode(normalized),
-      rootCause: "No stored interpretation for this code and no analysis provider available.",
+      rootCause:
+        "No stored interpretation for this code and no analysis provider available.",
       recommendations: [
         "Have the vehicle scanned by a professional",
         "Consult the vehicle manual for this code",
@@ -262,14 +280,20 @@ export class LLMService {
     };
   }
 
-  private async checkAvailability(provider: LLMProvider, path: string): Promise<boolean> {
+  private async checkAvailability(
+    provider: LLMProvider,
+    path: string
+  ): Promise<boolean> {
     const client = this.clients[provider];
     if (!client) return false;
     try {
       const response = await client.get(path);
       return response.status === 200;
     } catch (error) {
-      console.error(`[LLM] ${provider} unavailable:`, error instanceof Error ? error.message : error);
+      console.error(
+        `[LLM] ${provider} unavailable:`,
+        error instanceof Error ? error.message : error
+      );
       return false;
     }
   }
@@ -289,7 +313,11 @@ const COMMON_CODES: Record<string, Omit<ErrorAnalysis, "source">> = {
     description: "Mass or Volume Air Flow Circuit Range/Performance",
     severity: "warning",
     rootCause: "MAF sensor malfunction or an unmetered air leak",
-    recommendations: ["Clean or replace the MAF sensor", "Check for air leaks", "Inspect the air filter"],
+    recommendations: [
+      "Clean or replace the MAF sensor",
+      "Check for air leaks",
+      "Inspect the air filter",
+    ],
     estimatedRepairCost: "100-300 EUR",
     urgency: "medium",
   },
@@ -298,7 +326,11 @@ const COMMON_CODES: Record<string, Omit<ErrorAnalysis, "source">> = {
     description: "System Too Lean (Bank 1)",
     severity: "error",
     rootCause: "Vacuum leak, low fuel pressure or a drifting oxygen sensor",
-    recommendations: ["Check fuel pressure", "Inspect the oxygen sensor", "Check for vacuum leaks"],
+    recommendations: [
+      "Check fuel pressure",
+      "Inspect the oxygen sensor",
+      "Check for vacuum leaks",
+    ],
     estimatedRepairCost: "150-400 EUR",
     urgency: "medium",
   },
@@ -306,8 +338,13 @@ const COMMON_CODES: Record<string, Omit<ErrorAnalysis, "source">> = {
     code: "P0300",
     description: "Random/Multiple Cylinder Misfire Detected",
     severity: "critical",
-    rootCause: "Ignition or fuel delivery fault affecting more than one cylinder",
-    recommendations: ["Check spark plugs", "Inspect fuel injectors", "Check ignition coils"],
+    rootCause:
+      "Ignition or fuel delivery fault affecting more than one cylinder",
+    recommendations: [
+      "Check spark plugs",
+      "Inspect fuel injectors",
+      "Check ignition coils",
+    ],
     estimatedRepairCost: "200-500 EUR",
     urgency: "high",
   },
@@ -315,7 +352,8 @@ const COMMON_CODES: Record<string, Omit<ErrorAnalysis, "source">> = {
     code: "P0420",
     description: "Catalyst System Efficiency Below Threshold",
     severity: "error",
-    rootCause: "Degraded catalytic converter, or a downstream oxygen sensor reading incorrectly",
+    rootCause:
+      "Degraded catalytic converter, or a downstream oxygen sensor reading incorrectly",
     recommendations: [
       "Verify the downstream oxygen sensor before replacing the catalyst",
       "Inspect the exhaust system for leaks",

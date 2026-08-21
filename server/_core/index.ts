@@ -38,7 +38,10 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
  * Serial ports stay claimed by the OS until the handle is released, so an
  * abrupt exit leaves the OBD adapter unusable until it is replugged.
  */
-function registerShutdownHandlers(server: Server, closeWebSocket: () => Promise<void>) {
+function registerShutdownHandlers(
+  server: Server,
+  closeWebSocket: () => Promise<void>
+) {
   let shuttingDown = false;
 
   const shutdown = async (signal: string) => {
@@ -97,10 +100,16 @@ async function startServer() {
     provider: ENV.llm.provider,
     timeoutMs: 30_000,
     openrouter: ENV.llm.openRouterApiKey
-      ? { apiKey: ENV.llm.openRouterApiKey, model: ENV.llm.openRouterModel || undefined }
+      ? {
+          apiKey: ENV.llm.openRouterApiKey,
+          model: ENV.llm.openRouterModel || undefined,
+        }
       : undefined,
     lmstudio: ENV.llm.lmStudioBaseUrl
-      ? { baseUrl: ENV.llm.lmStudioBaseUrl, model: ENV.llm.lmStudioModel || undefined }
+      ? {
+          baseUrl: ENV.llm.lmStudioBaseUrl,
+          model: ENV.llm.lmStudioModel || undefined,
+        }
       : undefined,
   });
 

@@ -53,7 +53,9 @@ export const vehicles = mysqlTable(
     fuelType: varchar("fuelType", { length: 50 }),
     licensePlate: varchar("licensePlate", { length: 20 }),
     mileage: int("mileage"),
-    status: mysqlEnum("status", ["active", "inactive", "warning", "error"]).default("active").notNull(),
+    status: mysqlEnum("status", ["active", "inactive", "warning", "error"])
+      .default("active")
+      .notNull(),
     lastDiagnosisAt: timestamp("lastDiagnosisAt"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -78,7 +80,12 @@ export const obdDevices = mysqlTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     deviceName: varchar("deviceName", { length: 100 }).notNull(),
-    deviceType: mysqlEnum("deviceType", ["elm327", "canAdapter", "wifi", "bluetooth"]).notNull(),
+    deviceType: mysqlEnum("deviceType", [
+      "elm327",
+      "canAdapter",
+      "wifi",
+      "bluetooth",
+    ]).notNull(),
     connectionString: varchar("connectionString", { length: 255 }),
     isActive: boolean("isActive").default(true).notNull(),
     lastConnectedAt: timestamp("lastConnectedAt"),
@@ -102,24 +109,45 @@ export const diagnostics = mysqlTable(
     userId: int("userId")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    obdDeviceId: int("obdDeviceId").references(() => obdDevices.id, { onDelete: "set null" }),
-    diagnosticType: mysqlEnum("diagnosticType", ["full_scan", "quick_scan", "custom", "real_time"]).notNull(),
-    status: mysqlEnum("status", ["running", "completed", "failed", "cancelled"]).default("running").notNull(),
+    obdDeviceId: int("obdDeviceId").references(() => obdDevices.id, {
+      onDelete: "set null",
+    }),
+    diagnosticType: mysqlEnum("diagnosticType", [
+      "full_scan",
+      "quick_scan",
+      "custom",
+      "real_time",
+    ]).notNull(),
+    status: mysqlEnum("status", ["running", "completed", "failed", "cancelled"])
+      .default("running")
+      .notNull(),
     errorCount: int("errorCount").default(0).notNull(),
     warningCount: int("warningCount").default(0).notNull(),
     mileageAtDiagnosis: int("mileageAtDiagnosis"),
     // Numeric readings are stored as numbers so they can be aggregated and
     // compared in SQL. Units are fixed per column and documented here.
     /** Engine coolant temperature in degrees Celsius. */
-    engineTemperature: decimal("engineTemperature", { precision: 6, scale: 2, mode: "number" }),
+    engineTemperature: decimal("engineTemperature", {
+      precision: 6,
+      scale: 2,
+      mode: "number",
+    }),
     /** Engine speed in revolutions per minute. */
     rpm: int("rpm"),
     /** Vehicle speed in km/h. */
     speed: int("speed"),
     /** Fuel rail pressure in kPa. */
-    fuelPressure: decimal("fuelPressure", { precision: 8, scale: 2, mode: "number" }),
+    fuelPressure: decimal("fuelPressure", {
+      precision: 8,
+      scale: 2,
+      mode: "number",
+    }),
     /** O2 sensor voltage in volts. */
-    oxygenSensor: decimal("oxygenSensor", { precision: 5, scale: 3, mode: "number" }),
+    oxygenSensor: decimal("oxygenSensor", {
+      precision: 5,
+      scale: 3,
+      mode: "number",
+    }),
     diagnosticData: text("diagnosticData"),
     notes: text("notes"),
     startedAt: timestamp("startedAt").defaultNow().notNull(),
@@ -148,7 +176,12 @@ export const errorCodes = mysqlTable(
       .references(() => diagnostics.id, { onDelete: "cascade" }),
     code: varchar("code", { length: 10 }).notNull(),
     description: text("description"),
-    severity: mysqlEnum("severity", ["info", "warning", "error", "critical"]).notNull(),
+    severity: mysqlEnum("severity", [
+      "info",
+      "warning",
+      "error",
+      "critical",
+    ]).notNull(),
     system: varchar("system", { length: 50 }),
     isResolved: boolean("isResolved").default(false).notNull(),
     resolvedAt: timestamp("resolvedAt"),
@@ -174,7 +207,11 @@ export const obdParameters = mysqlTable(
       .references(() => diagnostics.id, { onDelete: "cascade" }),
     parameterId: varchar("parameterId", { length: 10 }).notNull(),
     parameterName: varchar("parameterName", { length: 100 }).notNull(),
-    value: decimal("value", { precision: 12, scale: 4, mode: "number" }).notNull(),
+    value: decimal("value", {
+      precision: 12,
+      scale: 4,
+      mode: "number",
+    }).notNull(),
     unit: varchar("unit", { length: 50 }),
     minValue: decimal("minValue", { precision: 12, scale: 4, mode: "number" }),
     maxValue: decimal("maxValue", { precision: 12, scale: 4, mode: "number" }),
@@ -186,7 +223,10 @@ export const obdParameters = mysqlTable(
   table => [
     index("obdParameters_diagnosticId_idx").on(table.diagnosticId),
     index("obdParameters_timestamp_idx").on(table.timestamp),
-    index("obdParameters_diagnosticId_parameterId_idx").on(table.diagnosticId, table.parameterId),
+    index("obdParameters_diagnosticId_parameterId_idx").on(
+      table.diagnosticId,
+      table.parameterId
+    ),
   ]
 );
 
@@ -201,7 +241,12 @@ export const diagnosticReports = mysqlTable(
     diagnosticId: int("diagnosticId")
       .notNull()
       .references(() => diagnostics.id, { onDelete: "cascade" }),
-    reportType: mysqlEnum("reportType", ["summary", "detailed", "pdf", "csv"]).notNull(),
+    reportType: mysqlEnum("reportType", [
+      "summary",
+      "detailed",
+      "pdf",
+      "csv",
+    ]).notNull(),
     reportData: text("reportData"),
     recommendations: text("recommendations"),
     generatedAt: timestamp("generatedAt").defaultNow().notNull(),
@@ -229,22 +274,40 @@ export const obdDevicesRelations = relations(obdDevices, ({ one, many }) => ({
 }));
 
 export const diagnosticsRelations = relations(diagnostics, ({ one, many }) => ({
-  vehicle: one(vehicles, { fields: [diagnostics.vehicleId], references: [vehicles.id] }),
+  vehicle: one(vehicles, {
+    fields: [diagnostics.vehicleId],
+    references: [vehicles.id],
+  }),
   user: one(users, { fields: [diagnostics.userId], references: [users.id] }),
-  obdDevice: one(obdDevices, { fields: [diagnostics.obdDeviceId], references: [obdDevices.id] }),
+  obdDevice: one(obdDevices, {
+    fields: [diagnostics.obdDeviceId],
+    references: [obdDevices.id],
+  }),
   errorCodes: many(errorCodes),
   parameters: many(obdParameters),
   reports: many(diagnosticReports),
 }));
 
 export const errorCodesRelations = relations(errorCodes, ({ one }) => ({
-  diagnostic: one(diagnostics, { fields: [errorCodes.diagnosticId], references: [diagnostics.id] }),
+  diagnostic: one(diagnostics, {
+    fields: [errorCodes.diagnosticId],
+    references: [diagnostics.id],
+  }),
 }));
 
 export const obdParametersRelations = relations(obdParameters, ({ one }) => ({
-  diagnostic: one(diagnostics, { fields: [obdParameters.diagnosticId], references: [diagnostics.id] }),
+  diagnostic: one(diagnostics, {
+    fields: [obdParameters.diagnosticId],
+    references: [diagnostics.id],
+  }),
 }));
 
-export const diagnosticReportsRelations = relations(diagnosticReports, ({ one }) => ({
-  diagnostic: one(diagnostics, { fields: [diagnosticReports.diagnosticId], references: [diagnostics.id] }),
-}));
+export const diagnosticReportsRelations = relations(
+  diagnosticReports,
+  ({ one }) => ({
+    diagnostic: one(diagnostics, {
+      fields: [diagnosticReports.diagnosticId],
+      references: [diagnostics.id],
+    }),
+  })
+);

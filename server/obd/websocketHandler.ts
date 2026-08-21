@@ -53,26 +53,54 @@ interface SocketData {
  * rather than a payload the client silently never receives.
  */
 interface ServerToClientEvents {
-  "diagnostic:started": (payload: { sessionId: string; port: string; vehicleId: number }) => void;
+  "diagnostic:started": (payload: {
+    sessionId: string;
+    port: string;
+    vehicleId: number;
+  }) => void;
   "diagnostic:stopped": (payload: {
     sessionId: string;
     parameters: OBDParameter[];
     errorCodes: OBDError[];
   }) => void;
-  "parameter:update": (payload: { sessionId: string; parameter: OBDParameter }) => void;
-  "parameter:response": (payload: { sessionId: string; parameter: OBDParameter }) => void;
-  "parameter:error": (payload: { sessionId: string; pid: string; error: string }) => void;
-  "errorcode:update": (payload: { sessionId: string; errorCodes: OBDError[] }) => void;
+  "parameter:update": (payload: {
+    sessionId: string;
+    parameter: OBDParameter;
+  }) => void;
+  "parameter:response": (payload: {
+    sessionId: string;
+    parameter: OBDParameter;
+  }) => void;
+  "parameter:error": (payload: {
+    sessionId: string;
+    pid: string;
+    error: string;
+  }) => void;
+  "errorcode:update": (payload: {
+    sessionId: string;
+    errorCodes: OBDError[];
+  }) => void;
   "errorcode:cleared": (payload: { sessionId: string }) => void;
   "obd:connected": (payload: { sessionId: string; port: string }) => void;
   "obd:disconnected": (payload: { sessionId: string; port: string }) => void;
-  "obd:error": (payload: { sessionId: string; port: string; error?: string }) => void;
+  "obd:error": (payload: {
+    sessionId: string;
+    port: string;
+    error?: string;
+  }) => void;
   error: (payload: { event: string; message: string }) => void;
 }
 
-type AuthedSocket = Socket<Record<string, never>, ServerToClientEvents, Record<string, never>, SocketData>;
+type AuthedSocket = Socket<
+  Record<string, never>,
+  ServerToClientEvents,
+  Record<string, never>,
+  SocketData
+>;
 
-type Ack = (result: { ok: true; data?: unknown } | { ok: false; error: string }) => void;
+type Ack = (
+  result: { ok: true; data?: unknown } | { ok: false; error: string }
+) => void;
 
 const startSchema = z.object({
   vehicleId: z.number().int().positive(),
@@ -82,9 +110,7 @@ const startSchema = z.object({
 });
 const sessionSchema = z.object({ sessionId: z.string().uuid() });
 const parameterRequestSchema = sessionSchema.extend({
-  pid: z
-    .string()
-    .regex(/^[0-9A-Fa-f]{2}$/, "PID must be two hex digits"),
+  pid: z.string().regex(/^[0-9A-Fa-f]{2}$/, "PID must be two hex digits"),
 });
 const clearSchema = sessionSchema.extend({
   /** Explicit opt-in; clearing DTCs also wipes freeze frames and readiness monitors. */
@@ -92,13 +118,23 @@ const clearSchema = sessionSchema.extend({
 });
 
 export class WebSocketHandler {
-  private io: SocketIOServer<Record<string, never>, ServerToClientEvents, Record<string, never>, SocketData>;
+  private io: SocketIOServer<
+    Record<string, never>,
+    ServerToClientEvents,
+    Record<string, never>,
+    SocketData
+  >;
   private sessions: Map<string, DiagnosticSession> = new Map();
   /** Port -> session id, so a reading can be routed to exactly one session. */
   private portSessions: Map<string, string> = new Map();
 
   constructor(httpServer: HTTPServer) {
-    this.io = new SocketIOServer<Record<string, never>, ServerToClientEvents, Record<string, never>, SocketData>(httpServer, {
+    this.io = new SocketIOServer<
+      Record<string, never>,
+      ServerToClientEvents,
+      Record<string, never>,
+      SocketData
+    >(httpServer, {
       path: "/api/socket.io",
       cors: {
         // Empty list means same-origin only: no Access-Control-Allow-Origin is
@@ -152,7 +188,9 @@ export class WebSocketHandler {
    */
   private assertPortAllowed(port: string): void {
     if (ENV.obdAllowedPorts.length === 0) {
-      throw new Error("No OBD ports are configured on this server (set OBD_ALLOWED_PORTS)");
+      throw new Error(
+        "No OBD ports are configured on this server (set OBD_ALLOWED_PORTS)"
+      );
     }
     if (!ENV.obdAllowedPorts.includes(port)) {
       throw new Error(`Port ${port} is not in the allowed list`);
@@ -160,7 +198,10 @@ export class WebSocketHandler {
   }
 
   /** Look up a session and verify the socket's user owns it. */
-  private requireOwnedSession(socket: AuthedSocket, sessionId: string): DiagnosticSession {
+  private requireOwnedSession(
+    socket: AuthedSocket,
+    sessionId: string
+  ): DiagnosticSession {
     const session = this.sessions.get(sessionId);
     if (!session || session.userId !== socket.data.user.id) {
       throw new Error("Session not found");
@@ -203,7 +244,9 @@ export class WebSocketHandler {
   private setupHandlers(): void {
     this.io.on("connection", rawSocket => {
       const socket = rawSocket as AuthedSocket;
-      console.log(`[WebSocket] Client connected: ${socket.id} (user ${socket.data.user.id})`);
+      console.log(
+        `[WebSocket] Client connected: ${socket.id} (user ${socket.data.user.id})`
+      );
 
       this.handle(socket, "diagnostic:start", startSchema, (s, input) =>
         this.handleDiagnosticStart(s, input)
@@ -211,8 +254,11 @@ export class WebSocketHandler {
       this.handle(socket, "diagnostic:stop", sessionSchema, (s, input) =>
         this.handleDiagnosticStop(s, input.sessionId)
       );
-      this.handle(socket, "parameter:request", parameterRequestSchema, (s, input) =>
-        this.handleParameterRequest(s, input.sessionId, input.pid)
+      this.handle(
+        socket,
+        "parameter:request",
+        parameterRequestSchema,
+        (s, input) => this.handleParameterRequest(s, input.sessionId, input.pid)
       );
       this.handle(socket, "errorcode:read", sessionSchema, (s, input) =>
         this.handleErrorCodeRead(s, input.sessionId)
@@ -227,41 +273,66 @@ export class WebSocketHandler {
 
   private setupOBDListeners(): void {
     // Route each reading to the one session that owns the port it came from.
-    obdManager.on("parameter", ({ port, parameter }: { port: string; parameter: OBDParameter }) => {
-      const sessionId = this.portSessions.get(port);
-      if (!sessionId) return;
+    obdManager.on(
+      "parameter",
+      ({ port, parameter }: { port: string; parameter: OBDParameter }) => {
+        const sessionId = this.portSessions.get(port);
+        if (!sessionId) return;
 
-      const session = this.sessions.get(sessionId);
-      if (!session || !session.isActive) return;
+        const session = this.sessions.get(sessionId);
+        if (!session || !session.isActive) return;
 
-      session.parameters.push(parameter);
-      if (session.parameters.length > MAX_SESSION_PARAMETERS) {
-        session.parameters.splice(0, session.parameters.length - MAX_SESSION_PARAMETERS);
+        session.parameters.push(parameter);
+        if (session.parameters.length > MAX_SESSION_PARAMETERS) {
+          session.parameters.splice(
+            0,
+            session.parameters.length - MAX_SESSION_PARAMETERS
+          );
+        }
+
+        this.io
+          .to(this.room(sessionId))
+          .emit("parameter:update", { sessionId, parameter });
       }
+    );
 
-      this.io.to(this.room(sessionId)).emit("parameter:update", { sessionId, parameter });
-    });
-
-    obdManager.on("parameterError", ({ port, pid, error }: { port: string; pid: string; error: string }) => {
-      const sessionId = this.portSessions.get(port);
-      if (!sessionId) return;
-      this.io.to(this.room(sessionId)).emit("parameter:error", { sessionId, pid, error });
-    });
+    obdManager.on(
+      "parameterError",
+      ({ port, pid, error }: { port: string; pid: string; error: string }) => {
+        const sessionId = this.portSessions.get(port);
+        if (!sessionId) return;
+        this.io
+          .to(this.room(sessionId))
+          .emit("parameter:error", { sessionId, pid, error });
+      }
+    );
 
     // Connection-level events are addressed to the session on that port rather
     // than broadcast to everyone.
     obdManager.on("connected", ({ port }: { port: string }) => {
       const sessionId = this.portSessions.get(port);
-      if (sessionId) this.io.to(this.room(sessionId)).emit("obd:connected", { sessionId, port });
+      if (sessionId)
+        this.io
+          .to(this.room(sessionId))
+          .emit("obd:connected", { sessionId, port });
     });
     obdManager.on("disconnected", ({ port }: { port: string }) => {
       const sessionId = this.portSessions.get(port);
-      if (sessionId) this.io.to(this.room(sessionId)).emit("obd:disconnected", { sessionId, port });
+      if (sessionId)
+        this.io
+          .to(this.room(sessionId))
+          .emit("obd:disconnected", { sessionId, port });
     });
-    obdManager.on("error", ({ port, error }: { port: string; error?: string }) => {
-      const sessionId = this.portSessions.get(port);
-      if (sessionId) this.io.to(this.room(sessionId)).emit("obd:error", { sessionId, port, error });
-    });
+    obdManager.on(
+      "error",
+      ({ port, error }: { port: string; error?: string }) => {
+        const sessionId = this.portSessions.get(port);
+        if (sessionId)
+          this.io
+            .to(this.room(sessionId))
+            .emit("obd:error", { sessionId, port, error });
+      }
+    );
   }
 
   private room(sessionId: string): string {
@@ -280,7 +351,10 @@ export class WebSocketHandler {
     if (!vehicle) throw new Error("Vehicle not found");
 
     if (input.diagnosticId !== undefined) {
-      const diagnostic = await db.getOwnedDiagnostic(user.id, input.diagnosticId);
+      const diagnostic = await db.getOwnedDiagnostic(
+        user.id,
+        input.diagnosticId
+      );
       if (!diagnostic) throw new Error("Diagnostic not found");
     }
 
@@ -288,7 +362,9 @@ export class WebSocketHandler {
     // interleave commands on a device that answers one request at a time.
     const existing = this.portSessions.get(input.port);
     if (existing && this.sessions.get(existing)?.isActive) {
-      throw new Error(`Port ${input.port} is already in use by another session`);
+      throw new Error(
+        `Port ${input.port} is already in use by another session`
+      );
     }
 
     const sessionId = randomUUID();
@@ -314,12 +390,21 @@ export class WebSocketHandler {
     }
     obdManager.startScanning(input.port, input.intervalMs ?? 1000);
 
-    socket.emit("diagnostic:started", { sessionId, port: input.port, vehicleId: input.vehicleId });
-    console.log(`[WebSocket] Diagnostic started: ${sessionId} (user ${user.id})`);
+    socket.emit("diagnostic:started", {
+      sessionId,
+      port: input.port,
+      vehicleId: input.vehicleId,
+    });
+    console.log(
+      `[WebSocket] Diagnostic started: ${sessionId} (user ${user.id})`
+    );
     return { sessionId, port: input.port };
   }
 
-  private async handleDiagnosticStop(socket: AuthedSocket, sessionId: string): Promise<void> {
+  private async handleDiagnosticStop(
+    socket: AuthedSocket,
+    sessionId: string
+  ): Promise<void> {
     const session = this.requireOwnedSession(socket, sessionId);
 
     obdManager.stopScanning(session.port);
@@ -348,33 +433,49 @@ export class WebSocketHandler {
 
     session.parameters.push(parameter);
     if (session.parameters.length > MAX_SESSION_PARAMETERS) {
-      session.parameters.splice(0, session.parameters.length - MAX_SESSION_PARAMETERS);
+      session.parameters.splice(
+        0,
+        session.parameters.length - MAX_SESSION_PARAMETERS
+      );
     }
 
     socket.emit("parameter:response", { sessionId, parameter });
     return parameter;
   }
 
-  private async handleErrorCodeRead(socket: AuthedSocket, sessionId: string): Promise<OBDError[]> {
+  private async handleErrorCodeRead(
+    socket: AuthedSocket,
+    sessionId: string
+  ): Promise<OBDError[]> {
     const session = this.requireOwnedSession(socket, sessionId);
 
     const errorCodes = await obdManager.readErrorCodes(session.port);
     session.errorCodes = errorCodes;
 
-    this.io.to(this.room(sessionId)).emit("errorcode:update", { sessionId, errorCodes });
-    console.log(`[WebSocket] Error codes read: ${sessionId} (${errorCodes.length} found)`);
+    this.io
+      .to(this.room(sessionId))
+      .emit("errorcode:update", { sessionId, errorCodes });
+    console.log(
+      `[WebSocket] Error codes read: ${sessionId} (${errorCodes.length} found)`
+    );
     return errorCodes;
   }
 
-  private async handleErrorCodeClear(socket: AuthedSocket, sessionId: string): Promise<void> {
+  private async handleErrorCodeClear(
+    socket: AuthedSocket,
+    sessionId: string
+  ): Promise<void> {
     const session = this.requireOwnedSession(socket, sessionId);
 
     const cleared = await obdManager.clearErrorCodes(session.port);
-    if (!cleared) throw new Error("The vehicle did not acknowledge the clear command");
+    if (!cleared)
+      throw new Error("The vehicle did not acknowledge the clear command");
 
     session.errorCodes = [];
     this.io.to(this.room(sessionId)).emit("errorcode:cleared", { sessionId });
-    console.log(`[WebSocket] Error codes cleared: ${sessionId} (user ${socket.data.user.id})`);
+    console.log(
+      `[WebSocket] Error codes cleared: ${sessionId} (user ${socket.data.user.id})`
+    );
   }
 
   /** Drop a session and release the port it held. */
@@ -411,7 +512,9 @@ export class WebSocketHandler {
   }
 
   getAllSessions(): DiagnosticSession[] {
-    return Array.from(this.sessions.values()).filter(session => session.isActive);
+    return Array.from(this.sessions.values()).filter(
+      session => session.isActive
+    );
   }
 
   async close(): Promise<void> {

@@ -64,7 +64,9 @@ export default function VehicleFormDialog({ open, onOpenChange }: Props) {
 
     const normalizedVin = vin.trim().toUpperCase();
     if (!VIN_PATTERN.test(normalizedVin)) {
-      setFormError("Die VIN muss aus genau 17 Zeichen bestehen (ohne I, O und Q).");
+      setFormError(
+        "Die VIN muss aus genau 17 Zeichen bestehen (ohne I, O und Q)."
+      );
       return;
     }
 
@@ -74,8 +76,12 @@ export default function VehicleFormDialog({ open, onOpenChange }: Props) {
       return;
     }
 
-    const parsedMileage = mileage.trim() === "" ? undefined : Number.parseInt(mileage, 10);
-    if (parsedMileage !== undefined && (!Number.isFinite(parsedMileage) || parsedMileage < 0)) {
+    const parsedMileage =
+      mileage.trim() === "" ? undefined : Number.parseInt(mileage, 10);
+    if (
+      parsedMileage !== undefined &&
+      (!Number.isFinite(parsedMileage) || parsedMileage < 0)
+    ) {
       setFormError("Bitte einen gültigen Kilometerstand angeben.");
       return;
     }
@@ -186,11 +192,17 @@ export default function VehicleFormDialog({ open, onOpenChange }: Props) {
           )}
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Abbrechen
             </Button>
             <Button type="submit" disabled={createVehicle.isPending}>
-              {createVehicle.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {createVehicle.isPending && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
               Hinzufügen
             </Button>
           </DialogFooter>

@@ -1,9 +1,9 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Zap, TrendingUp, Shield, BarChart3, Cpu } from "lucide-react";
-import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
+import { APP_LOGO, getLoginUrl } from "@/const";
 import { useEffect } from "react";
 
 export default function Home() {
@@ -25,7 +25,9 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={APP_LOGO} alt="AutoKI Logo" className="h-10 w-10" />
-            <span className="text-xl font-bold text-white">AutoKI Assistent</span>
+            <span className="text-xl font-bold text-white">
+              AutoKI Assistent
+            </span>
           </div>
           <div className="flex items-center gap-4">
             {loading ? (
@@ -68,9 +70,9 @@ export default function Home() {
                   Intelligente Fahrzeugdiagnose mit KI
                 </h1>
                 <p className="text-xl text-blue-100 leading-relaxed">
-                  Verbinden Sie sich mit der Motorsteuerung Ihres Fahrzeugs über OBD und erhalten Sie
-                  sofortige, präzise Diagnosen. Die perfekte Plattform für Automechaniker und
-                  Fahrzeugbegeisterte.
+                  Verbinden Sie sich mit der Motorsteuerung Ihres Fahrzeugs über
+                  OBD und erhalten Sie sofortige, präzise Diagnosen. Die
+                  perfekte Plattform für Automechaniker und Fahrzeugbegeisterte.
                 </p>
               </div>
 
@@ -119,7 +121,9 @@ export default function Home() {
       <section id="funktionen" className="py-20 bg-slate-900/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4">Kernfunktionen</h2>
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Kernfunktionen
+            </h2>
             <p className="text-xl text-blue-200">
               Alles, was Sie für professionelle Fahrzeugdiagnosen benötigen
             </p>
@@ -176,7 +180,9 @@ export default function Home() {
                         <Icon className="h-6 w-6 text-blue-400" />
                       </div>
                     </div>
-                    <CardTitle className="text-white">{feature.title}</CardTitle>
+                    <CardTitle className="text-white">
+                      {feature.title}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-blue-200">{feature.description}</p>
@@ -192,8 +198,12 @@ export default function Home() {
       <section id="ablauf" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4">So funktioniert es</h2>
-            <p className="text-xl text-blue-200">Drei einfache Schritte zur Fahrzeugdiagnose</p>
+            <h2 className="text-4xl font-bold text-white mb-4">
+              So funktioniert es
+            </h2>
+            <p className="text-xl text-blue-200">
+              Drei einfache Schritte zur Fahrzeugdiagnose
+            </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -201,7 +211,8 @@ export default function Home() {
               {
                 step: "1",
                 title: "Verbinden",
-                description: "Verbinden Sie Ihr OBD-Gerät mit dem Fahrzeug und der Plattform.",
+                description:
+                  "Verbinden Sie Ihr OBD-Gerät mit dem Fahrzeug und der Plattform.",
               },
               {
                 step: "2",
@@ -221,8 +232,12 @@ export default function Home() {
                   <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-2xl font-bold text-white mb-4">
                     {item.step}
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2 text-center">{item.title}</h3>
-                  <p className="text-blue-200 text-center">{item.description}</p>
+                  <h3 className="text-xl font-bold text-white mb-2 text-center">
+                    {item.title}
+                  </h3>
+                  <p className="text-blue-200 text-center">
+                    {item.description}
+                  </p>
                 </div>
                 {idx < 2 && (
                   <div className="hidden md:block absolute top-8 -right-4 w-8 h-1 bg-gradient-to-r from-blue-600 to-transparent" />
@@ -240,7 +255,8 @@ export default function Home() {
             Bereit für intelligente Fahrzeugdiagnose?
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Treten Sie Tausenden von Mechanikern bei, die AutoKI Assistent vertrauen.
+            Treten Sie Tausenden von Mechanikern bei, die AutoKI Assistent
+            vertrauen.
           </p>
           <Button
             size="lg"
@@ -278,7 +294,9 @@ export default function Home() {
               </ul>
             </div>
             <div>
-              <h4 className="text-white font-bold mb-4">Unterstützte Hardware</h4>
+              <h4 className="text-white font-bold mb-4">
+                Unterstützte Hardware
+              </h4>
               <ul className="space-y-2 text-blue-200 text-sm">
                 <li>ELM327 (USB / Bluetooth)</li>
                 <li>D-CAN Adapter</li>
@@ -287,7 +305,10 @@ export default function Home() {
           </div>
 
           <div className="border-t border-blue-900/20 pt-8 text-center text-blue-300 text-sm">
-            <p>&copy; {new Date().getFullYear()} AutoKI Assistent. Alle Rechte vorbehalten.</p>
+            <p>
+              &copy; {new Date().getFullYear()} AutoKI Assistent. Alle Rechte
+              vorbehalten.
+            </p>
           </div>
         </div>
       </footer>

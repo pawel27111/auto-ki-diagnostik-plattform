@@ -6,7 +6,13 @@
  */
 
 export interface ReportInput {
-  vehicle: { make: string; model: string; year: number; vin: string; licensePlate?: string | null } | null;
+  vehicle: {
+    make: string;
+    model: string;
+    year: number;
+    vin: string;
+    licensePlate?: string | null;
+  } | null;
   diagnostic: {
     id: number;
     status: string;
@@ -23,7 +29,12 @@ export interface ReportInput {
     isNormal: boolean;
     isSimulated: boolean;
   }[];
-  errorCodes: { code: string; description: string | null; severity: string; system: string | null }[];
+  errorCodes: {
+    code: string;
+    description: string | null;
+    severity: string;
+    system: string | null;
+  }[];
 }
 
 function csvCell(value: unknown): string {
@@ -38,22 +49,45 @@ export function buildReportCsv(input: ReportInput): string {
 
   lines.push("AutoKI Assistent — Diagnosebericht");
   lines.push("");
-  lines.push(["Fahrzeug", vehicle ? `${vehicle.make} ${vehicle.model} (${vehicle.year})` : "—"].map(csvCell).join(";"));
+  lines.push(
+    [
+      "Fahrzeug",
+      vehicle ? `${vehicle.make} ${vehicle.model} (${vehicle.year})` : "—",
+    ]
+      .map(csvCell)
+      .join(";")
+  );
   lines.push(["VIN", vehicle?.vin ?? "—"].map(csvCell).join(";"));
-  lines.push(["Kennzeichen", vehicle?.licensePlate ?? "—"].map(csvCell).join(";"));
+  lines.push(
+    ["Kennzeichen", vehicle?.licensePlate ?? "—"].map(csvCell).join(";")
+  );
   lines.push(["Diagnose-ID", diagnostic.id].map(csvCell).join(";"));
   lines.push(["Status", diagnostic.status].map(csvCell).join(";"));
-  lines.push(["Gestartet", new Date(diagnostic.startedAt).toISOString()].map(csvCell).join(";"));
-  lines.push([
-    "Abgeschlossen",
-    diagnostic.completedAt ? new Date(diagnostic.completedAt).toISOString() : "—",
-  ].map(csvCell).join(";"));
+  lines.push(
+    ["Gestartet", new Date(diagnostic.startedAt).toISOString()]
+      .map(csvCell)
+      .join(";")
+  );
+  lines.push(
+    [
+      "Abgeschlossen",
+      diagnostic.completedAt
+        ? new Date(diagnostic.completedAt).toISOString()
+        : "—",
+    ]
+      .map(csvCell)
+      .join(";")
+  );
   lines.push(["Fehler", diagnostic.errorCount].map(csvCell).join(";"));
   lines.push(["Warnungen", diagnostic.warningCount].map(csvCell).join(";"));
 
   lines.push("");
   lines.push("OBD-Parameter");
-  lines.push(["PID", "Bezeichnung", "Wert", "Einheit", "Im Normbereich", "Simuliert"].map(csvCell).join(";"));
+  lines.push(
+    ["PID", "Bezeichnung", "Wert", "Einheit", "Im Normbereich", "Simuliert"]
+      .map(csvCell)
+      .join(";")
+  );
   for (const parameter of parameters) {
     lines.push(
       [
@@ -71,13 +105,17 @@ export function buildReportCsv(input: ReportInput): string {
 
   lines.push("");
   lines.push("Fehlercodes");
-  lines.push(["Code", "Beschreibung", "Schweregrad", "System"].map(csvCell).join(";"));
+  lines.push(
+    ["Code", "Beschreibung", "Schweregrad", "System"].map(csvCell).join(";")
+  );
   if (errorCodes.length === 0) {
     lines.push(csvCell("Keine Fehlercodes gefunden"));
   } else {
     for (const code of errorCodes) {
       lines.push(
-        [code.code, code.description ?? "", code.severity, code.system ?? ""].map(csvCell).join(";")
+        [code.code, code.description ?? "", code.severity, code.system ?? ""]
+          .map(csvCell)
+          .join(";")
       );
     }
   }
@@ -93,7 +131,7 @@ export function buildReportCsv(input: ReportInput): string {
  */
 export function downloadReportCsv(input: ReportInput): void {
   const csv = buildReportCsv(input);
-  const blob = new Blob([`﻿${csv}`], { type: "text/csv;charset=utf-8" });
+  const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
 
   const link = document.createElement("a");

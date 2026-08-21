@@ -21,9 +21,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useOBDStreaming } from "@/hooks/useOBDStreaming";
-import { formatMeasurement, SEVERITY_CLASSES, SEVERITY_LABELS } from "@/lib/format";
+import {
+  formatMeasurement,
+  SEVERITY_CLASSES,
+  SEVERITY_LABELS,
+} from "@/lib/format";
 import { trpc } from "@/lib/trpc";
-import { Activity, AlertCircle, Gauge, Loader2, Thermometer, Zap } from "lucide-react";
+import {
+  Activity,
+  AlertCircle,
+  Gauge,
+  Loader2,
+  Thermometer,
+  Zap,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -55,32 +66,30 @@ export default function RealtimeDiagnostic() {
   const vehiclesQuery = trpc.obd.vehicles.list.useQuery();
   const portsQuery = trpc.obd.devices.availablePorts.useQuery();
 
-  const vehicles = useMemo(() => vehiclesQuery.data ?? [], [vehiclesQuery.data]);
+  const vehicles = useMemo(
+    () => vehiclesQuery.data ?? [],
+    [vehiclesQuery.data]
+  );
   const ports = useMemo(() => portsQuery.data ?? [], [portsQuery.data]);
 
-  const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(null);
-  const [selectedPort, setSelectedPort] = useState<string>("");
+  // Explicit picks only; the defaults below are derived during render rather
+  // than synced into state from an effect.
+  const [pickedVehicleId, setPickedVehicleId] = useState<number | null>(null);
+  const [pickedPort, setPickedPort] = useState<string>("");
   const [isClearDialogOpen, setClearDialogOpen] = useState(false);
 
-  // Default to the only sensible choice when there is exactly one.
-  useEffect(() => {
-    setSelectedVehicleId(current => current ?? (vehicles.length === 1 ? vehicles[0].id : null));
-  }, [vehicles]);
-
-  useEffect(() => {
-    setSelectedPort(current => {
-      if (current) return current;
-      const present = ports.find(port => port.isPresent);
-      return present?.path ?? "";
-    });
-  }, [ports]);
+  const selectedVehicleId =
+    pickedVehicleId ?? (vehicles.length === 1 ? vehicles[0].id : null);
+  const selectedPort =
+    pickedPort || (ports.find(port => port.isPresent)?.path ?? "");
 
   useEffect(() => {
     if (error) toast.error(error);
   }, [error]);
 
   const visibleParameters = parameters.slice(-VISIBLE_PARAMETERS).reverse();
-  const canStart = isConnected && !isBusy && selectedVehicleId !== null && selectedPort !== "";
+  const canStart =
+    isConnected && !isBusy && selectedVehicleId !== null && selectedPort !== "";
 
   async function handleStart() {
     if (selectedVehicleId === null || !selectedPort) return;
@@ -100,8 +109,12 @@ export default function RealtimeDiagnostic() {
 
       <div className="max-w-7xl mx-auto p-6">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Echtzeit-Fahrzeugdiagnose</h1>
-          <p className="text-slate-300">Live OBD-Datenerfassung von angeschlossener Hardware</p>
+          <h1 className="text-4xl font-bold text-white mb-2">
+            Echtzeit-Fahrzeugdiagnose
+          </h1>
+          <p className="text-slate-300">
+            Live OBD-Datenerfassung von angeschlossener Hardware
+          </p>
         </div>
 
         <Card className="bg-slate-800 border-slate-700 mb-6">
@@ -116,7 +129,9 @@ export default function RealtimeDiagnostic() {
           </CardHeader>
           <CardContent>
             <p className="text-slate-300">
-              {isConnected ? "Mit Server verbunden" : "Keine Verbindung zum Server"}
+              {isConnected
+                ? "Mit Server verbunden"
+                : "Keine Verbindung zum Server"}
             </p>
             {error && <p className="text-red-400 mt-2">{error}</p>}
           </CardContent>
@@ -127,8 +142,8 @@ export default function RealtimeDiagnostic() {
             <CardContent className="pt-6">
               <p className="text-amber-200 text-sm">
                 Auf diesem Server ist kein OBD-Port freigegeben. Setzen Sie{" "}
-                <code className="font-mono">OBD_ALLOWED_PORTS</code> in der Serverkonfiguration, um
-                Hardware-Diagnosen zu erlauben.
+                <code className="font-mono">OBD_ALLOWED_PORTS</code> in der
+                Serverkonfiguration, um Hardware-Diagnosen zu erlauben.
               </p>
             </CardContent>
           </Card>
@@ -145,15 +160,22 @@ export default function RealtimeDiagnostic() {
               </Label>
               <Select
                 value={selectedPort}
-                onValueChange={setSelectedPort}
+                onValueChange={setPickedPort}
                 disabled={ports.length === 0 || activeSession !== null}
               >
-                <SelectTrigger id="port-select" className="bg-slate-700 text-white border-slate-600">
+                <SelectTrigger
+                  id="port-select"
+                  className="bg-slate-700 text-white border-slate-600"
+                >
                   <SelectValue placeholder="Port wählen" />
                 </SelectTrigger>
                 <SelectContent>
                   {ports.map(port => (
-                    <SelectItem key={port.path} value={port.path} disabled={!port.isPresent}>
+                    <SelectItem
+                      key={port.path}
+                      value={port.path}
+                      disabled={!port.isPresent}
+                    >
                       {port.path}
                       {port.manufacturer ? ` — ${port.manufacturer}` : ""}
                       {port.isPresent ? "" : " (nicht verbunden)"}
@@ -174,10 +196,13 @@ export default function RealtimeDiagnostic() {
               </Label>
               <Select
                 value={selectedVehicleId ? String(selectedVehicleId) : ""}
-                onValueChange={value => setSelectedVehicleId(Number(value))}
+                onValueChange={value => setPickedVehicleId(Number(value))}
                 disabled={vehicles.length === 0 || activeSession !== null}
               >
-                <SelectTrigger id="vehicle-select" className="bg-slate-700 text-white border-slate-600">
+                <SelectTrigger
+                  id="vehicle-select"
+                  className="bg-slate-700 text-white border-slate-600"
+                >
                   <SelectValue placeholder="Fahrzeug wählen" />
                 </SelectTrigger>
                 <SelectContent>
@@ -242,18 +267,27 @@ export default function RealtimeDiagnostic() {
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2 min-w-0">
                               {parameterIcon(parameter.name)}
-                              <span className="text-white font-medium truncate">{parameter.name}</span>
+                              <span className="text-white font-medium truncate">
+                                {parameter.name}
+                              </span>
                             </div>
                             <span
                               className={`font-bold shrink-0 ${
-                                parameter.isNormal ? "text-green-400" : "text-red-400"
+                                parameter.isNormal
+                                  ? "text-green-400"
+                                  : "text-red-400"
                               }`}
                             >
-                              {formatMeasurement(parameter.value, parameter.unit)}
+                              {formatMeasurement(
+                                parameter.value,
+                                parameter.unit
+                              )}
                             </span>
                           </div>
                           <p className="text-xs text-slate-400 mt-1">
-                            {new Date(parameter.timestamp).toLocaleTimeString("de-DE")}
+                            {new Date(parameter.timestamp).toLocaleTimeString(
+                              "de-DE"
+                            )}
                           </p>
                         </div>
                       ))
@@ -285,8 +319,14 @@ export default function RealtimeDiagnostic() {
                               {SEVERITY_LABELS[code.severity] ?? code.severity}
                             </Badge>
                           </div>
-                          {code.description && <div className="text-sm mt-1">{code.description}</div>}
-                          <div className="text-xs opacity-80 mt-1">{code.system}</div>
+                          {code.description && (
+                            <div className="text-sm mt-1">
+                              {code.description}
+                            </div>
+                          )}
+                          <div className="text-xs opacity-80 mt-1">
+                            {code.system}
+                          </div>
                         </div>
                       ))
                     )}
@@ -321,7 +361,9 @@ export default function RealtimeDiagnostic() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <p className="text-slate-400 text-sm">Port</p>
-                    <p className="text-white font-semibold break-all">{activeSession.port}</p>
+                    <p className="text-white font-semibold break-all">
+                      {activeSession.port}
+                    </p>
                   </div>
                   <div>
                     <p className="text-slate-400 text-sm">Status</p>
@@ -331,11 +373,15 @@ export default function RealtimeDiagnostic() {
                   </div>
                   <div>
                     <p className="text-slate-400 text-sm">Parameter</p>
-                    <p className="text-white font-semibold">{parameters.length}</p>
+                    <p className="text-white font-semibold">
+                      {parameters.length}
+                    </p>
                   </div>
                   <div>
                     <p className="text-slate-400 text-sm">Fehler</p>
-                    <p className="text-white font-semibold">{errorCodes.length}</p>
+                    <p className="text-white font-semibold">
+                      {errorCodes.length}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -349,11 +395,14 @@ export default function RealtimeDiagnostic() {
       <AlertDialog open={isClearDialogOpen} onOpenChange={setClearDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Fehlerspeicher wirklich löschen?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Fehlerspeicher wirklich löschen?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Dieser Vorgang löscht alle {errorCodes.length} gespeicherten Fehlercodes dauerhaft aus
-              dem Steuergerät. Dabei gehen auch Freeze-Frame-Daten und die Readiness-Monitore
-              verloren, die für die Abgasuntersuchung benötigt werden. Der Vorgang kann nicht
+              Dieser Vorgang löscht alle {errorCodes.length} gespeicherten
+              Fehlercodes dauerhaft aus dem Steuergerät. Dabei gehen auch
+              Freeze-Frame-Daten und die Readiness-Monitore verloren, die für
+              die Abgasuntersuchung benötigt werden. Der Vorgang kann nicht
               rückgängig gemacht werden.
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -23,7 +23,10 @@ import {
  * is indistinguishable from one that does not exist.
  */
 
-async function requireOwnedVehicle(userId: number, vehicleId: number): Promise<Vehicle> {
+async function requireOwnedVehicle(
+  userId: number,
+  vehicleId: number
+): Promise<Vehicle> {
   const vehicle = await db.getOwnedVehicle(userId, vehicleId);
   if (!vehicle) {
     throw new TRPCError({ code: "NOT_FOUND", message: "Vehicle not found" });
@@ -31,7 +34,10 @@ async function requireOwnedVehicle(userId: number, vehicleId: number): Promise<V
   return vehicle;
 }
 
-async function requireOwnedDiagnostic(userId: number, diagnosticId: number): Promise<Diagnostic> {
+async function requireOwnedDiagnostic(
+  userId: number,
+  diagnosticId: number
+): Promise<Diagnostic> {
   const diagnostic = await db.getOwnedDiagnostic(userId, diagnosticId);
   if (!diagnostic) {
     throw new TRPCError({ code: "NOT_FOUND", message: "Diagnostic not found" });
@@ -71,7 +77,10 @@ const dtcSchema = z
   .string()
   .trim()
   .toUpperCase()
-  .regex(/^[PCBU][0-3][0-9A-F]{3}$/, "Not a valid OBD-II diagnostic trouble code");
+  .regex(
+    /^[PCBU][0-3][0-9A-F]{3}$/,
+    "Not a valid OBD-II diagnostic trouble code"
+  );
 
 export const obdRouter = router({
   // Vehicle Management
@@ -160,7 +169,9 @@ export const obdRouter = router({
       if (ENV.obdAllowedPorts.length === 0) return [];
 
       const { obdManager } = await import("./obd/obdManager");
-      const present = new Map((await obdManager.getAvailablePorts()).map(port => [port.path, port]));
+      const present = new Map(
+        (await obdManager.getAvailablePorts()).map(port => [port.path, port])
+      );
 
       return ENV.obdAllowedPorts.map(path => ({
         path,
@@ -178,7 +189,12 @@ export const obdRouter = router({
         z.object({
           vehicleId: z.number().int().positive(),
           obdDeviceId: z.number().int().positive().optional(),
-          diagnosticType: z.enum(["full_scan", "quick_scan", "custom", "real_time"]),
+          diagnosticType: z.enum([
+            "full_scan",
+            "quick_scan",
+            "custom",
+            "real_time",
+          ]),
           mileage: z.number().int().min(0).max(10_000_000).optional(),
         })
       )
@@ -188,9 +204,15 @@ export const obdRouter = router({
         // A device id from another user would silently link foreign hardware to
         // this session, so verify it the same way as the vehicle.
         if (input.obdDeviceId !== undefined) {
-          const device = await db.getOwnedObdDevice(ctx.user.id, input.obdDeviceId);
+          const device = await db.getOwnedObdDevice(
+            ctx.user.id,
+            input.obdDeviceId
+          );
           if (!device) {
-            throw new TRPCError({ code: "NOT_FOUND", message: "OBD device not found" });
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "OBD device not found",
+            });
           }
         }
 
@@ -226,7 +248,11 @@ export const obdRouter = router({
 
     // Recent diagnostics across all of the user's vehicles
     listRecent: protectedProcedure
-      .input(z.object({ limit: z.number().int().min(1).max(100).default(20) }).optional())
+      .input(
+        z
+          .object({ limit: z.number().int().min(1).max(100).default(20) })
+          .optional()
+      )
       .query(async ({ ctx, input }) => {
         return db.getUserDiagnostics(ctx.user.id, input?.limit ?? 20);
       }),
@@ -247,7 +273,10 @@ export const obdRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const diagnostic = await requireOwnedDiagnostic(ctx.user.id, input.diagnosticId);
+        const diagnostic = await requireOwnedDiagnostic(
+          ctx.user.id,
+          input.diagnosticId
+        );
         requireRunning(diagnostic);
 
         const parameterId = await db.createObdParameter({
@@ -284,7 +313,10 @@ export const obdRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const diagnostic = await requireOwnedDiagnostic(ctx.user.id, input.diagnosticId);
+        const diagnostic = await requireOwnedDiagnostic(
+          ctx.user.id,
+          input.diagnosticId
+        );
         requireRunning(diagnostic);
 
         const errorCodeId = await db.createErrorCode({
@@ -319,16 +351,23 @@ export const obdRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const diagnostic = await requireOwnedDiagnostic(ctx.user.id, input.diagnosticId);
+        const diagnostic = await requireOwnedDiagnostic(
+          ctx.user.id,
+          input.diagnosticId
+        );
         requireRunning(diagnostic);
 
         // Counts are derived from what was actually stored rather than taken
         // from the client, so the summary can never contradict the detail rows.
-        const storedCodes = await db.getDiagnosticErrorCodes(input.diagnosticId);
+        const storedCodes = await db.getDiagnosticErrorCodes(
+          input.diagnosticId
+        );
         const errorCount = storedCodes.filter(
           code => code.severity === "error" || code.severity === "critical"
         ).length;
-        const warningCount = storedCodes.filter(code => code.severity === "warning").length;
+        const warningCount = storedCodes.filter(
+          code => code.severity === "warning"
+        ).length;
 
         await db.updateDiagnosticStatus(input.diagnosticId, "completed", {
           errorCount,
@@ -342,7 +381,12 @@ export const obdRouter = router({
         });
         await db.updateVehicleDiagnosisTimestamp(diagnostic.vehicleId);
 
-        return { success: true, status: "completed" as const, errorCount, warningCount };
+        return {
+          success: true,
+          status: "completed" as const,
+          errorCount,
+          warningCount,
+        };
       }),
 
     // Fail a diagnostic session
@@ -354,7 +398,10 @@ export const obdRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const diagnostic = await requireOwnedDiagnostic(ctx.user.id, input.diagnosticId);
+        const diagnostic = await requireOwnedDiagnostic(
+          ctx.user.id,
+          input.diagnosticId
+        );
         requireRunning(diagnostic);
 
         await db.updateDiagnosticStatus(input.diagnosticId, "failed", {
@@ -367,7 +414,10 @@ export const obdRouter = router({
     cancel: protectedProcedure
       .input(z.object({ diagnosticId: z.number().int().positive() }))
       .mutation(async ({ ctx, input }) => {
-        const diagnostic = await requireOwnedDiagnostic(ctx.user.id, input.diagnosticId);
+        const diagnostic = await requireOwnedDiagnostic(
+          ctx.user.id,
+          input.diagnosticId
+        );
         requireRunning(diagnostic);
 
         await db.updateDiagnosticStatus(input.diagnosticId, "cancelled");
@@ -379,13 +429,15 @@ export const obdRouter = router({
   // not have to keep its own copy in sync.
   pids: router({
     list: protectedProcedure.query(() => {
-      return Object.values(PID_DEFINITIONS).map(({ pid, name, unit, normalRange, displayRange }) => ({
-        pid,
-        name,
-        unit,
-        normalRange: normalRange ?? null,
-        displayRange,
-      }));
+      return Object.values(PID_DEFINITIONS).map(
+        ({ pid, name, unit, normalRange, displayRange }) => ({
+          pid,
+          name,
+          unit,
+          normalRange: normalRange ?? null,
+          displayRange,
+        })
+      );
     }),
   }),
 
@@ -402,7 +454,10 @@ export const obdRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const diagnostic = await requireOwnedDiagnostic(ctx.user.id, input.diagnosticId);
+        const diagnostic = await requireOwnedDiagnostic(
+          ctx.user.id,
+          input.diagnosticId
+        );
         requireRunning(diagnostic);
 
         // Draw once. Deriving the stored counts from a second draw was how the
@@ -440,7 +495,8 @@ export const obdRouter = router({
           ? [
               {
                 code: "P0101",
-                description: "Mass or Volume Air Flow Circuit Range/Performance",
+                description:
+                  "Mass or Volume Air Flow Circuit Range/Performance",
                 system: "Powertrain",
               },
               {
@@ -462,25 +518,37 @@ export const obdRouter = router({
         }
 
         const errorCount = simulatedFaults.filter(
-          fault => severityForCode(fault.code) === "error" || severityForCode(fault.code) === "critical"
+          fault =>
+            severityForCode(fault.code) === "error" ||
+            severityForCode(fault.code) === "critical"
         ).length;
         const warningCount = simulatedFaults.filter(
           fault => severityForCode(fault.code) === "warning"
         ).length;
 
-        const byPid = new Map(readings.map(reading => [reading.parameterId, reading.value]));
+        const byPid = new Map(
+          readings.map(reading => [reading.parameterId, reading.value])
+        );
         await db.updateDiagnosticStatus(input.diagnosticId, "completed", {
           errorCount,
           warningCount,
           engineTemperature: byPid.get("05") ?? null,
-          rpm: byPid.get("0C") !== undefined ? Math.round(byPid.get("0C")!) : null,
-          speed: byPid.get("0D") !== undefined ? Math.round(byPid.get("0D")!) : null,
+          rpm:
+            byPid.get("0C") !== undefined ? Math.round(byPid.get("0C")!) : null,
+          speed:
+            byPid.get("0D") !== undefined ? Math.round(byPid.get("0D")!) : null,
           fuelPressure: byPid.get("0A") ?? null,
           oxygenSensor: byPid.get("14") ?? null,
         });
         await db.updateVehicleDiagnosisTimestamp(diagnostic.vehicleId);
 
-        return { success: true, status: "completed" as const, errorCount, warningCount, simulated: true };
+        return {
+          success: true,
+          status: "completed" as const,
+          errorCount,
+          warningCount,
+          simulated: true,
+        };
       }),
   }),
 });

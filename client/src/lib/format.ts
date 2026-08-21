@@ -5,21 +5,35 @@
  * than being baked into stored strings the way the old schema did.
  */
 
-const numberFormat = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 });
-const dateTimeFormat = new Intl.DateTimeFormat("de-DE", { dateStyle: "medium", timeStyle: "short" });
+const numberFormat = new Intl.NumberFormat("de-DE", {
+  maximumFractionDigits: 2,
+});
+const dateTimeFormat = new Intl.DateTimeFormat("de-DE", {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
 const dateFormat = new Intl.DateTimeFormat("de-DE", { dateStyle: "medium" });
 
 export function formatNumber(value: number | null | undefined): string {
-  if (value === null || value === undefined || !Number.isFinite(value)) return "—";
+  if (value === null || value === undefined || !Number.isFinite(value))
+    return "—";
   return numberFormat.format(value);
 }
 
-export function formatMeasurement(value: number | null | undefined, unit?: string | null): string {
-  if (value === null || value === undefined || !Number.isFinite(value)) return "—";
-  return unit ? `${numberFormat.format(value)} ${unit}` : numberFormat.format(value);
+export function formatMeasurement(
+  value: number | null | undefined,
+  unit?: string | null
+): string {
+  if (value === null || value === undefined || !Number.isFinite(value))
+    return "—";
+  return unit
+    ? `${numberFormat.format(value)} ${unit}`
+    : numberFormat.format(value);
 }
 
-export function formatDateTime(value: Date | string | null | undefined): string {
+export function formatDateTime(
+  value: Date | string | null | undefined
+): string {
   if (!value) return "—";
   const date = value instanceof Date ? value : new Date(value);
   return Number.isNaN(date.getTime()) ? "—" : dateTimeFormat.format(date);
@@ -31,7 +45,9 @@ export function formatDate(value: Date | string | null | undefined): string {
   return Number.isNaN(date.getTime()) ? "—" : dateFormat.format(date);
 }
 
-export function formatRelative(value: Date | string | null | undefined): string {
+export function formatRelative(
+  value: Date | string | null | undefined
+): string {
   if (!value) return "Noch keine Diagnose";
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
@@ -60,7 +76,8 @@ export function toPercent(
   min: number | null | undefined,
   max: number | null | undefined
 ): number {
-  if (value === null || value === undefined || !Number.isFinite(value)) return 0;
+  if (value === null || value === undefined || !Number.isFinite(value))
+    return 0;
 
   const lower = Number.isFinite(min ?? NaN) ? (min as number) : 0;
   const upper = Number.isFinite(max ?? NaN) ? (max as number) : 100;
