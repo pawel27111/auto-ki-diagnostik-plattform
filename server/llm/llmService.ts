@@ -1,12 +1,23 @@
-import axios, { AxiosInstance } from "axios";
+import axios, { type AxiosInstance } from "axios";
+import { z } from "zod";
+import { severityForCode, type Severity } from "../obd/protocol";
 
 /**
- * LLM Service
- * Supports both OpenRouter API and local LM Studio for intelligent error code analysis
+ * LLM service for interpreting OBD trouble codes.
+ *
+ * Supports OpenRouter and a local LM Studio instance. Both speak the OpenAI
+ * chat-completions shape, so a single request path covers them; only the base
+ * URL, auth header and default model differ.
+ *
+ * Model output is untrusted input: it is validated against {@link analysisSchema}
+ * before any field is used, and every failure falls back to the static
+ * catalogue rather than surfacing a partially-parsed analysis.
  */
 
+export type LLMProvider = "openrouter" | "lmstudio";
+
 export interface LLMConfig {
-  provider: "openrouter" | "lmstudio" | "auto";
+  provider: LLMProvider | "auto";
   openrouter?: {
     apiKey: string;
     model?: string;
@@ -15,377 +26,351 @@ export interface LLMConfig {
     baseUrl: string;
     model?: string;
   };
+  /** Per-request timeout. Without one a stalled provider hangs the caller. */
+  timeoutMs?: number;
 }
 
 export interface ErrorAnalysis {
   code: string;
   description: string;
-  severity: "info" | "warning" | "error" | "critical";
+  severity: Severity;
   rootCause: string;
   recommendations: string[];
   estimatedRepairCost: string;
   urgency: "low" | "medium" | "high" | "critical";
+  /** Which provider produced this, or "fallback" for the static catalogue. */
+  source: LLMProvider | "fallback";
+}
+
+const DEFAULT_TIMEOUT_MS = 30_000;
+const DEFAULT_OPENROUTER_MODEL = "anthropic/claude-3.5-sonnet";
+const DEFAULT_LMSTUDIO_MODEL = "local-model";
+
+/** Shape the model is asked to return. Anything else is rejected. */
+const analysisSchema = z.object({
+  rootCause: z.string().min(1).max(2000),
+  recommendations: z.array(z.string().min(1).max(500)).min(1).max(10),
+  estimatedRepairCost: z.string().min(1).max(100),
+  urgency: z.enum(["low", "medium", "high", "critical"]),
+});
+
+const chatCompletionSchema = z.object({
+  choices: z
+    .array(z.object({ message: z.object({ content: z.string().nullable() }) }))
+    .min(1),
+});
+
+const SYSTEM_PROMPT =
+  "You are an expert automotive diagnostic assistant. Answer with a single JSON object and no other text.";
+
+function buildPrompt(code: string, description: string): string {
+  return `Analyse this OBD-II diagnostic trouble code.
+
+Error code: ${code}
+Reported description: ${description || "(none supplied by the adapter)"}
+
+Reply with exactly this JSON object and nothing else:
+{
+  "rootCause": "one or two sentences on the most likely cause",
+  "recommendations": ["concrete check or repair step", "..."],
+  "estimatedRepairCost": "a range in EUR, e.g. 150-400 EUR",
+  "urgency": "low" | "medium" | "high" | "critical"
+}`;
+}
+
+/**
+ * Pull the JSON object out of a model reply.
+ *
+ * Models wrap JSON in prose or markdown fences often enough that requiring a
+ * bare object would fail on otherwise good answers.
+ */
+function extractJson(content: string): unknown {
+  const fenced = content.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const candidate = fenced ? fenced[1] : content;
+
+  const start = candidate.indexOf("{");
+  const end = candidate.lastIndexOf("}");
+  if (start === -1 || end <= start) {
+    throw new Error("Model reply contained no JSON object");
+  }
+
+  return JSON.parse(candidate.slice(start, end + 1));
 }
 
 export class LLMService {
   private config: LLMConfig;
-  private openrouterClient?: AxiosInstance;
-  private lmstudioClient?: AxiosInstance;
-  private activeProvider: "openrouter" | "lmstudio" = "openrouter";
+  private clients: Partial<Record<LLMProvider, AxiosInstance>> = {};
+  private models: Partial<Record<LLMProvider, string>> = {};
+  private activeProvider: LLMProvider;
 
   constructor(config: LLMConfig) {
     this.config = config;
-    this.initialize();
-  }
+    const timeout = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
-  /**
-   * Initialize LLM clients
-   */
-  private initialize(): void {
-    // Initialize OpenRouter client
-    if (this.config.openrouter?.apiKey) {
-      this.openrouterClient = axios.create({
+    if (config.openrouter?.apiKey) {
+      this.clients.openrouter = axios.create({
         baseURL: "https://openrouter.ai/api/v1",
+        timeout,
         headers: {
-          Authorization: `Bearer ${this.config.openrouter.apiKey}`,
+          Authorization: `Bearer ${config.openrouter.apiKey}`,
           "HTTP-Referer": "https://auto-ki-assistent.local",
           "X-Title": "AutoKI Assistent",
         },
       });
+      this.models.openrouter =
+        config.openrouter.model || DEFAULT_OPENROUTER_MODEL;
     }
 
-    // Initialize LM Studio client
-    if (this.config.lmstudio?.baseUrl) {
-      this.lmstudioClient = axios.create({
-        baseURL: this.config.lmstudio.baseUrl,
+    if (config.lmstudio?.baseUrl) {
+      this.clients.lmstudio = axios.create({
+        baseURL: config.lmstudio.baseUrl.replace(/\/+$/, ""),
+        timeout,
       });
+      this.models.lmstudio = config.lmstudio.model || DEFAULT_LMSTUDIO_MODEL;
     }
 
-    // Determine active provider
-    if (this.config.provider === "auto") {
-      this.activeProvider = this.lmstudioClient ? "lmstudio" : "openrouter";
+    if (config.provider === "auto") {
+      // Prefer the local model when one is configured: no per-request cost and
+      // vehicle data never leaves the machine.
+      this.activeProvider = this.clients.lmstudio ? "lmstudio" : "openrouter";
     } else {
-      this.activeProvider = this.config.provider;
+      this.activeProvider = config.provider;
     }
   }
 
-  /**
-   * Analyze error code using LLM
-   */
-  async analyzeErrorCode(code: string, description: string): Promise<ErrorAnalysis> {
-    const prompt = `You are an expert automotive diagnostic AI. Analyze the following OBD error code and provide detailed information.
-
-Error Code: ${code}
-Description: ${description}
-
-Provide your response in JSON format with: rootCause, recommendations (array), estimatedRepairCost, urgency.
-Be concise and practical.`;
-
-    try {
-      if (this.activeProvider === "openrouter" && this.openrouterClient) {
-        return await this.analyzeWithOpenRouter(code, description, prompt);
-      } else if (this.activeProvider === "lmstudio" && this.lmstudioClient) {
-        return await this.analyzeWithLMStudio(code, description, prompt);
-      } else {
-        // Fallback to default analysis
-        return this.getDefaultAnalysis(code, description);
-      }
-    } catch (error) {
-      console.error("[LLM] Error analyzing error code:", error);
-
-      // Fallback to alternative provider
-      if (this.activeProvider === "openrouter" && this.lmstudioClient) {
-        try {
-          return await this.analyzeWithLMStudio(code, description, prompt);
-        } catch (fallbackError) {
-          console.error("[LLM] Fallback also failed:", fallbackError);
-        }
-      }
-
-      return this.getDefaultAnalysis(code, description);
-    }
-  }
-
-  /**
-   * Analyze with OpenRouter API
-   */
-  private async analyzeWithOpenRouter(
-    code: string,
-    description: string,
-    prompt: string
-  ): Promise<ErrorAnalysis> {
-    if (!this.openrouterClient) {
-      throw new Error("OpenRouter client not initialized");
-    }
-
-    try {
-      const response = await this.openrouterClient.post("/chat/completions", {
-        model: this.config.openrouter?.model || "meta-llama/llama-2-70b-chat",
-        messages: [
-          {
-            role: "system",
-            content: "You are an expert automotive diagnostic AI assistant. Provide accurate, practical diagnostic information.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 1000,
-      });
-
-      const content = response.data.choices[0]?.message?.content;
-      if (!content) {
-        throw new Error("No response from OpenRouter");
-      }
-
-      // Parse JSON response
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error("Could not parse JSON response");
-      }
-
-      const analysis = JSON.parse(jsonMatch[0]);
-
-      return {
-        code,
-        description,
-        severity: this.determineSeverity(code, analysis.urgency),
-        rootCause: analysis.rootCause || "Unknown cause",
-        recommendations: analysis.recommendations || [],
-        estimatedRepairCost: analysis.estimatedRepairCost || "Unknown",
-        urgency: analysis.urgency || "medium",
-      };
-    } catch (error) {
-      console.error("[LLM] OpenRouter analysis failed:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Analyze with local LM Studio
-   */
-  private async analyzeWithLMStudio(
-    code: string,
-    description: string,
-    prompt: string
-  ): Promise<ErrorAnalysis> {
-    if (!this.lmstudioClient) {
-      throw new Error("LM Studio client not initialized");
-    }
-
-    try {
-      const response = await this.lmstudioClient.post("/v1/chat/completions", {
-        model: this.config.lmstudio?.model || "local-model",
-        messages: [
-          {
-            role: "system",
-            content: "You are an expert automotive diagnostic AI assistant. Provide accurate, practical diagnostic information.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 1000,
-      });
-
-      const content = response.data.choices[0]?.message?.content;
-      if (!content) {
-        throw new Error("No response from LM Studio");
-      }
-
-      // Parse JSON response
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error("Could not parse JSON response");
-      }
-
-      const analysis = JSON.parse(jsonMatch[0]);
-
-      return {
-        code,
-        description,
-        severity: this.determineSeverity(code, analysis.urgency),
-        rootCause: analysis.rootCause || "Unknown cause",
-        recommendations: analysis.recommendations || [],
-        estimatedRepairCost: analysis.estimatedRepairCost || "Unknown",
-        urgency: analysis.urgency || "medium",
-      };
-    } catch (error) {
-      console.error("[LLM] LM Studio analysis failed:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Determine severity based on error code and urgency
-   */
-  private determineSeverity(
-    code: string,
-    urgency: string
-  ): "info" | "warning" | "error" | "critical" {
-    // Critical error codes
-    if (
-      code.startsWith("P0") &&
-      ["0300", "0420", "0505", "0606"].some((c) => code.includes(c))
-    ) {
-      return "critical";
-    }
-
-    // Map urgency to severity
-    switch (urgency?.toLowerCase()) {
-      case "critical":
-        return "critical";
-      case "high":
-        return "error";
-      case "medium":
-        return "warning";
-      default:
-        return "info";
-    }
-  }
-
-  /**
-   * Get default analysis (fallback)
-   */
-  private getDefaultAnalysis(
-    code: string,
-    description: string
-  ): ErrorAnalysis {
-    // Common error code mappings
-    const commonCodes: { [key: string]: ErrorAnalysis } = {
-      P0101: {
-        code: "P0101",
-        description: "Mass or Volume Air Flow Circuit Range/Performance",
-        severity: "warning",
-        rootCause: "MAF sensor malfunction or air leak",
-        recommendations: [
-          "Clean or replace MAF sensor",
-          "Check for air leaks",
-          "Inspect air filter",
-        ],
-        estimatedRepairCost: "100-300 EUR",
-        urgency: "medium",
-      },
-      P0300: {
-        code: "P0300",
-        description: "Random/Multiple Cylinder Misfire Detected",
-        severity: "error",
-        rootCause: "Ignition or fuel system issue",
-        recommendations: [
-          "Check spark plugs",
-          "Inspect fuel injectors",
-          "Check ignition coils",
-        ],
-        estimatedRepairCost: "200-500 EUR",
-        urgency: "high",
-      },
-      P0171: {
-        code: "P0171",
-        description: "System Too Lean (Bank 1)",
-        severity: "warning",
-        rootCause: "Fuel system pressure or oxygen sensor issue",
-        recommendations: [
-          "Check fuel pressure",
-          "Inspect oxygen sensor",
-          "Check for vacuum leaks",
-        ],
-        estimatedRepairCost: "150-400 EUR",
-        urgency: "medium",
-      },
-      P0420: {
-        code: "P0420",
-        description: "Catalyst System Efficiency Below Threshold",
-        severity: "error",
-        rootCause: "Catalytic converter failure",
-        recommendations: [
-          "Replace catalytic converter",
-          "Check oxygen sensors",
-          "Inspect exhaust system",
-        ],
-        estimatedRepairCost: "500-1500 EUR",
-        urgency: "high",
-      },
-    };
-
-    return (
-      commonCodes[code] || {
-        code,
-        description,
-        severity: "warning",
-        rootCause: "Please consult a professional mechanic",
-        recommendations: [
-          "Have the vehicle scanned by a professional",
-          "Consult the vehicle manual",
-          "Visit an authorized service center",
-        ],
-        estimatedRepairCost: "Unknown",
-        urgency: "medium",
-      }
-    );
-  }
-
-  /**
-   * Check OpenRouter availability
-   */
-  async checkOpenRouterAvailability(): Promise<boolean> {
-    if (!this.openrouterClient) return false;
-
-    try {
-      const response = await this.openrouterClient.get("/models");
-      return response.status === 200;
-    } catch (error) {
-      console.error("[LLM] OpenRouter unavailable:", error);
-      return false;
-    }
-  }
-
-  /**
-   * Check LM Studio availability
-   */
-  async checkLMStudioAvailability(): Promise<boolean> {
-    if (!this.lmstudioClient) return false;
-
-    try {
-      const response = await this.lmstudioClient.get("/v1/models");
-      return response.status === 200;
-    } catch (error) {
-      console.error("[LLM] LM Studio unavailable:", error);
-      return false;
-    }
-  }
-
-  /**
-   * Get active provider
-   */
-  getActiveProvider(): string {
+  getActiveProvider(): LLMProvider {
     return this.activeProvider;
   }
 
-  /**
-   * Switch provider
-   */
-  switchProvider(provider: "openrouter" | "lmstudio"): void {
-    if (provider === "openrouter" && this.openrouterClient) {
-      this.activeProvider = "openrouter";
-      console.log("[LLM] Switched to OpenRouter");
-    } else if (provider === "lmstudio" && this.lmstudioClient) {
-      this.activeProvider = "lmstudio";
-      console.log("[LLM] Switched to LM Studio");
-    } else {
-      console.warn("[LLM] Provider not available:", provider);
+  isAvailable(): boolean {
+    return Object.keys(this.clients).length > 0;
+  }
+
+  switchProvider(provider: LLMProvider): boolean {
+    if (!this.clients[provider]) {
+      console.warn("[LLM] Provider not configured:", provider);
+      return false;
     }
+    this.activeProvider = provider;
+    console.log(`[LLM] Switched to ${provider}`);
+    return true;
+  }
+
+  /**
+   * Analyse a trouble code, falling back through the configured providers and
+   * finally to the static catalogue. Never throws.
+   */
+  async analyzeErrorCode(
+    code: string,
+    description = ""
+  ): Promise<ErrorAnalysis> {
+    // Try the active provider first, then any other configured one. The old
+    // implementation only fell back in the OpenRouter -> LM Studio direction.
+    const order: LLMProvider[] = [
+      this.activeProvider,
+      ...(["openrouter", "lmstudio"] as LLMProvider[]).filter(
+        p => p !== this.activeProvider
+      ),
+    ];
+
+    for (const provider of order) {
+      if (!this.clients[provider]) continue;
+      try {
+        return await this.analyzeWith(provider, code, description);
+      } catch (error) {
+        console.error(
+          `[LLM] ${provider} analysis failed:`,
+          error instanceof Error ? error.message : error
+        );
+      }
+    }
+
+    return this.getDefaultAnalysis(code, description);
+  }
+
+  /**
+   * One request path for both providers. They differ only in base URL, auth and
+   * model name, all of which are resolved in the constructor.
+   */
+  private async analyzeWith(
+    provider: LLMProvider,
+    code: string,
+    description: string
+  ): Promise<ErrorAnalysis> {
+    const client = this.clients[provider];
+    if (!client) throw new Error(`${provider} client not initialised`);
+
+    const response = await client.post("/chat/completions", {
+      model: this.models[provider],
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: buildPrompt(code, description) },
+      ],
+      temperature: 0.2, // diagnostics should be reproducible, not creative
+      max_tokens: 1000,
+      response_format: { type: "json_object" },
+    });
+
+    const payload = chatCompletionSchema.parse(response.data);
+    const content = payload.choices[0].message.content;
+    if (!content) throw new Error(`Empty response from ${provider}`);
+
+    const analysis = analysisSchema.parse(extractJson(content));
+
+    return {
+      code,
+      description,
+      // The rule-based severity is the floor: a model must not downgrade a
+      // misfire to "info".
+      severity: this.combineSeverity(code, analysis.urgency),
+      rootCause: analysis.rootCause,
+      recommendations: analysis.recommendations,
+      estimatedRepairCost: analysis.estimatedRepairCost,
+      urgency: analysis.urgency,
+      source: provider,
+    };
+  }
+
+  /**
+   * Merge the rule-based severity for a code with the model's urgency, keeping
+   * whichever is more serious.
+   */
+  private combineSeverity(
+    code: string,
+    urgency: ErrorAnalysis["urgency"]
+  ): Severity {
+    const ranking: Severity[] = ["info", "warning", "error", "critical"];
+    const fromUrgency: Severity =
+      urgency === "critical"
+        ? "critical"
+        : urgency === "high"
+          ? "error"
+          : urgency === "medium"
+            ? "warning"
+            : "info";
+    const fromCode = severityForCode(code);
+    return ranking.indexOf(fromUrgency) > ranking.indexOf(fromCode)
+      ? fromUrgency
+      : fromCode;
+  }
+
+  /**
+   * Static catalogue used when no provider answers. Deliberately generic for
+   * unknown codes — a wrong specific repair suggestion is worse than none.
+   */
+  getDefaultAnalysis(code: string, description = ""): ErrorAnalysis {
+    const normalized = code.toUpperCase();
+    const known = COMMON_CODES[normalized];
+    if (known) return { ...known, source: "fallback" };
+
+    return {
+      code: normalized,
+      description,
+      severity: severityForCode(normalized),
+      rootCause:
+        "No stored interpretation for this code and no analysis provider available.",
+      recommendations: [
+        "Have the vehicle scanned by a professional",
+        "Consult the vehicle manual for this code",
+        "Visit an authorised service centre",
+      ],
+      estimatedRepairCost: "Unknown",
+      urgency: "medium",
+      source: "fallback",
+    };
+  }
+
+  private async checkAvailability(
+    provider: LLMProvider,
+    path: string
+  ): Promise<boolean> {
+    const client = this.clients[provider];
+    if (!client) return false;
+    try {
+      const response = await client.get(path);
+      return response.status === 200;
+    } catch (error) {
+      console.error(
+        `[LLM] ${provider} unavailable:`,
+        error instanceof Error ? error.message : error
+      );
+      return false;
+    }
+  }
+
+  checkOpenRouterAvailability(): Promise<boolean> {
+    return this.checkAvailability("openrouter", "/models");
+  }
+
+  checkLMStudioAvailability(): Promise<boolean> {
+    return this.checkAvailability("lmstudio", "/models");
   }
 }
 
-// Export singleton instance
-let llmService: LLMService;
+const COMMON_CODES: Record<string, Omit<ErrorAnalysis, "source">> = {
+  P0101: {
+    code: "P0101",
+    description: "Mass or Volume Air Flow Circuit Range/Performance",
+    severity: "warning",
+    rootCause: "MAF sensor malfunction or an unmetered air leak",
+    recommendations: [
+      "Clean or replace the MAF sensor",
+      "Check for air leaks",
+      "Inspect the air filter",
+    ],
+    estimatedRepairCost: "100-300 EUR",
+    urgency: "medium",
+  },
+  P0171: {
+    code: "P0171",
+    description: "System Too Lean (Bank 1)",
+    severity: "error",
+    rootCause: "Vacuum leak, low fuel pressure or a drifting oxygen sensor",
+    recommendations: [
+      "Check fuel pressure",
+      "Inspect the oxygen sensor",
+      "Check for vacuum leaks",
+    ],
+    estimatedRepairCost: "150-400 EUR",
+    urgency: "medium",
+  },
+  P0300: {
+    code: "P0300",
+    description: "Random/Multiple Cylinder Misfire Detected",
+    severity: "critical",
+    rootCause:
+      "Ignition or fuel delivery fault affecting more than one cylinder",
+    recommendations: [
+      "Check spark plugs",
+      "Inspect fuel injectors",
+      "Check ignition coils",
+    ],
+    estimatedRepairCost: "200-500 EUR",
+    urgency: "high",
+  },
+  P0420: {
+    code: "P0420",
+    description: "Catalyst System Efficiency Below Threshold",
+    severity: "error",
+    rootCause:
+      "Degraded catalytic converter, or a downstream oxygen sensor reading incorrectly",
+    recommendations: [
+      "Verify the downstream oxygen sensor before replacing the catalyst",
+      "Inspect the exhaust system for leaks",
+      "Replace the catalytic converter if the sensor checks out",
+    ],
+    estimatedRepairCost: "500-1500 EUR",
+    urgency: "high",
+  },
+};
+
+let llmService: LLMService | null = null;
 
 export function initializeLLMService(config: LLMConfig): LLMService {
   llmService = new LLMService(config);
+  console.log(
+    `[LLM] Initialised (active provider: ${llmService.getActiveProvider()}, configured: ${llmService.isAvailable()})`
+  );
   return llmService;
 }
 

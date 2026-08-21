@@ -21,7 +21,17 @@ export async function setupVite(app: Express, server: Server) {
   });
 
   app.use(vite.middlewares);
-  app.use("*", async (req, res, next) => {
+  // Wrapped rather than passed directly: express does not await handlers, so
+  // a rejection here would bypass the error middleware.
+  app.use("*", (req, res, next) => {
+    void renderIndex(req, res, next);
+  });
+
+  async function renderIndex(
+    req: Parameters<Parameters<Express["use"]>[1]>[0],
+    res: Parameters<Parameters<Express["use"]>[1]>[1],
+    next: (error?: unknown) => void
+  ) {
     const url = req.originalUrl;
 
     try {
@@ -44,7 +54,7 @@ export async function setupVite(app: Express, server: Server) {
       vite.ssrFixStacktrace(e as Error);
       next(e);
     }
-  });
+  }
 }
 
 export function serveStatic(app: Express) {

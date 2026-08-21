@@ -2,20 +2,30 @@ import * as React from "react";
 
 const MOBILE_BREAKPOINT = 768;
 
-export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(
-    undefined
-  );
+const query = `(max-width: ${MOBILE_BREAKPOINT - 1}px)`;
 
-  React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
-    const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    };
-    mql.addEventListener("change", onChange);
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    return () => mql.removeEventListener("change", onChange);
-  }, []);
+/**
+ * Track whether the viewport is below the mobile breakpoint.
+ *
+ * useSyncExternalStore reads the current match during render instead of
+ * setting state from an effect, which removes the extra render pass on mount
+ * and the brief undefined state that came with it.
+ */
+export function useIsMobile(): boolean {
+  return React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
 
-  return !!isMobile;
+function subscribe(onChange: () => void): () => void {
+  const mql = window.matchMedia(query);
+  mql.addEventListener("change", onChange);
+  return () => mql.removeEventListener("change", onChange);
+}
+
+function getSnapshot(): boolean {
+  return window.matchMedia(query).matches;
+}
+
+function getServerSnapshot(): boolean {
+  // No viewport during SSR or a thumbnail render; assume desktop.
+  return false;
 }

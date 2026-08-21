@@ -1,20 +1,22 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Zap, TrendingUp, Shield, BarChart3, Cpu } from "lucide-react";
-import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
+import { APP_LOGO, getLoginUrl } from "@/const";
 import { useEffect } from "react";
 
 export default function Home() {
   const { user, loading, isAuthenticated } = useAuth();
 
   useEffect(() => {
+    // Wait for the session query to settle: isAuthenticated is false while it
+    // is still loading, so acting on it early bounces signed-in users back here.
+    if (loading) return;
     if (isAuthenticated && user) {
-      // Redirect to dashboard if already authenticated
       window.location.href = "/dashboard";
     }
-  }, [isAuthenticated, user]);
+  }, [loading, isAuthenticated, user]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
@@ -23,7 +25,9 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={APP_LOGO} alt="AutoKI Logo" className="h-10 w-10" />
-            <span className="text-xl font-bold text-white">AutoKI Assistent</span>
+            <span className="text-xl font-bold text-white">
+              AutoKI Assistent
+            </span>
           </div>
           <div className="flex items-center gap-4">
             {loading ? (
@@ -43,11 +47,15 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 sm:py-32">
         <div className="absolute inset-0 opacity-30">
-          <img
-            src="/autoki-hero-banner.png"
-            alt="Hero Banner"
-            className="w-full h-full object-cover"
-          />
+          <picture>
+            <source srcSet="/autoki-hero-banner.webp" type="image/webp" />
+            <img
+              src="/autoki-hero-banner.jpg"
+              alt=""
+              aria-hidden="true"
+              className="w-full h-full object-cover"
+            />
+          </picture>
         </div>
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-transparent to-slate-950" />
 
@@ -62,9 +70,9 @@ export default function Home() {
                   Intelligente Fahrzeugdiagnose mit KI
                 </h1>
                 <p className="text-xl text-blue-100 leading-relaxed">
-                  Verbinden Sie sich mit der Motorsteuerung Ihres Fahrzeugs über OBD und erhalten Sie
-                  sofortige, präzise Diagnosen. Die perfekte Plattform für Automechaniker und
-                  Fahrzeugbegeisterte.
+                  Verbinden Sie sich mit der Motorsteuerung Ihres Fahrzeugs über
+                  OBD und erhalten Sie sofortige, präzise Diagnosen. Die
+                  perfekte Plattform für Automechaniker und Fahrzeugbegeisterte.
                 </p>
               </div>
 
@@ -79,9 +87,10 @@ export default function Home() {
                 <Button
                   size="lg"
                   variant="outline"
+                  asChild
                   className="border-blue-400 text-blue-300 hover:bg-blue-950"
                 >
-                  Mehr Erfahren
+                  <a href="#funktionen">Mehr Erfahren</a>
                 </Button>
               </div>
 
@@ -93,21 +102,28 @@ export default function Home() {
             </div>
 
             <div className="hidden md:block">
-              <img
-                src="/autoki-hero-banner.png"
-                alt="Diagnostic Dashboard"
-                className="rounded-lg shadow-2xl border border-blue-500/30"
-              />
+              <picture>
+                <source srcSet="/autoki-hero-banner.webp" type="image/webp" />
+                <img
+                  src="/autoki-hero-banner.jpg"
+                  alt="Diagnose-Oberfläche mit Live-Motordaten"
+                  loading="lazy"
+                  decoding="async"
+                  className="rounded-lg shadow-2xl border border-blue-500/30"
+                />
+              </picture>
             </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-slate-900/50">
+      <section id="funktionen" className="py-20 bg-slate-900/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4">Kernfunktionen</h2>
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Kernfunktionen
+            </h2>
             <p className="text-xl text-blue-200">
               Alles, was Sie für professionelle Fahrzeugdiagnosen benötigen
             </p>
@@ -164,7 +180,9 @@ export default function Home() {
                         <Icon className="h-6 w-6 text-blue-400" />
                       </div>
                     </div>
-                    <CardTitle className="text-white">{feature.title}</CardTitle>
+                    <CardTitle className="text-white">
+                      {feature.title}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-blue-200">{feature.description}</p>
@@ -177,11 +195,15 @@ export default function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-20">
+      <section id="ablauf" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4">So funktioniert es</h2>
-            <p className="text-xl text-blue-200">Drei einfache Schritte zur Fahrzeugdiagnose</p>
+            <h2 className="text-4xl font-bold text-white mb-4">
+              So funktioniert es
+            </h2>
+            <p className="text-xl text-blue-200">
+              Drei einfache Schritte zur Fahrzeugdiagnose
+            </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -189,7 +211,8 @@ export default function Home() {
               {
                 step: "1",
                 title: "Verbinden",
-                description: "Verbinden Sie Ihr OBD-Gerät mit dem Fahrzeug und der Plattform.",
+                description:
+                  "Verbinden Sie Ihr OBD-Gerät mit dem Fahrzeug und der Plattform.",
               },
               {
                 step: "2",
@@ -209,8 +232,12 @@ export default function Home() {
                   <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-2xl font-bold text-white mb-4">
                     {item.step}
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2 text-center">{item.title}</h3>
-                  <p className="text-blue-200 text-center">{item.description}</p>
+                  <h3 className="text-xl font-bold text-white mb-2 text-center">
+                    {item.title}
+                  </h3>
+                  <p className="text-blue-200 text-center">
+                    {item.description}
+                  </p>
                 </div>
                 {idx < 2 && (
                   <div className="hidden md:block absolute top-8 -right-4 w-8 h-1 bg-gradient-to-r from-blue-600 to-transparent" />
@@ -228,7 +255,8 @@ export default function Home() {
             Bereit für intelligente Fahrzeugdiagnose?
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Treten Sie Tausenden von Mechanikern bei, die AutoKI Assistent vertrauen.
+            Treten Sie Tausenden von Mechanikern bei, die AutoKI Assistent
+            vertrauen.
           </p>
           <Button
             size="lg"
@@ -243,7 +271,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-slate-950 border-t border-blue-900/20 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
+          <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div>
               <h4 className="text-white font-bold mb-4">AutoKI Assistent</h4>
               <p className="text-blue-200 text-sm">
@@ -254,66 +282,33 @@ export default function Home() {
               <h4 className="text-white font-bold mb-4">Produkt</h4>
               <ul className="space-y-2 text-blue-200 text-sm">
                 <li>
-                  <a href="#" className="hover:text-blue-400">
-                    Features
+                  <a href="#funktionen" className="hover:text-blue-400">
+                    Funktionen
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-blue-400">
-                    Preise
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-blue-400">
-                    Dokumentation
+                  <a href="#ablauf" className="hover:text-blue-400">
+                    So funktioniert es
                   </a>
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="text-white font-bold mb-4">Unternehmen</h4>
+              <h4 className="text-white font-bold mb-4">
+                Unterstützte Hardware
+              </h4>
               <ul className="space-y-2 text-blue-200 text-sm">
-                <li>
-                  <a href="#" className="hover:text-blue-400">
-                    Über uns
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-blue-400">
-                    Blog
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-blue-400">
-                    Kontakt
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-bold mb-4">Rechtliches</h4>
-              <ul className="space-y-2 text-blue-200 text-sm">
-                <li>
-                  <a href="#" className="hover:text-blue-400">
-                    Datenschutz
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-blue-400">
-                    Bedingungen
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-blue-400">
-                    Impressum
-                  </a>
-                </li>
+                <li>ELM327 (USB / Bluetooth)</li>
+                <li>D-CAN Adapter</li>
               </ul>
             </div>
           </div>
 
           <div className="border-t border-blue-900/20 pt-8 text-center text-blue-300 text-sm">
-            <p>&copy; 2025 AutoKI Assistent. Alle Rechte vorbehalten.</p>
+            <p>
+              &copy; {new Date().getFullYear()} AutoKI Assistent. Alle Rechte
+              vorbehalten.
+            </p>
           </div>
         </div>
       </footer>

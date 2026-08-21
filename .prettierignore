@@ -33,3 +33,7 @@ pnpm-lock.yaml
 # OS files
 .DS_Store
 Thumbs.db
+
+# Vendored shadcn/ui components: keep them byte-identical to upstream so they
+# can be re-generated without a formatting diff.
+client/src/components/ui

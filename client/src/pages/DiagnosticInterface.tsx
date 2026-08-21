@@ -1,545 +1,619 @@
-import { useAuth } from "@/_core/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import AppNav from "@/components/AppNav";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  AlertTriangle,
+  DIAGNOSTIC_STATUS_LABELS,
+  formatDateTime,
+  formatMeasurement,
+  SEVERITY_CLASSES,
+  SEVERITY_LABELS,
+  toPercent,
+} from "@/lib/format";
+import { downloadReportCsv } from "@/lib/report";
+import { trpc } from "@/lib/trpc";
+import {
   Activity,
-  Gauge,
-  Thermometer,
-  Zap,
-  RotateCcw,
-  Play,
-  StopCircle,
+  AlertTriangle,
   Download,
+  Gauge,
+  Loader2,
+  Play,
+  RotateCcw,
+  Sparkles,
+  Zap,
 } from "lucide-react";
-import { useState, useEffect } from "react";
-import { APP_LOGO } from "@/const";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { useSearch } from "wouter";
 
-interface OBDParameter {
-  id: number;
-  parameterId: string;
-  parameterName: string;
-  value: string;
-  unit: string;
-  minValue?: string;
-  maxValue?: string;
-  isNormal: boolean;
-}
-
-interface ErrorCode {
-  id: number;
-  code: string;
-  description: string;
-  severity: "info" | "warning" | "error" | "critical";
-  system: string;
-}
-
-interface DiagnosticSession {
-  id: number;
-  vehicleId: number;
-  status: "running" | "completed" | "failed";
-  errorCount: number;
-  warningCount: number;
-  engineTemperature?: string;
-  rpm?: string;
-  speed?: string;
-  fuelPressure?: string;
-  oxygenSensor?: string;
-  parameters: OBDParameter[];
-  errorCodes: ErrorCode[];
+/** Read a positive integer query parameter, or null. */
+function numericParam(search: string, key: string): number | null {
+  const raw = new URLSearchParams(search).get(key);
+  if (!raw) return null;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
 export default function DiagnosticInterface() {
-  const { user, isAuthenticated } = useAuth();
-  const [diagnosticSession, setDiagnosticSession] = useState<DiagnosticSession | null>(null);
-  const [isScanning, setIsScanning] = useState(false);
-  const [scanProgress, setScanProgress] = useState(0);
-  const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(null);
+  const search = useSearch();
+  const utils = trpc.useUtils();
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      window.location.href = "/";
-    }
-  }, [isAuthenticated]);
+  const vehiclesQuery = trpc.obd.vehicles.list.useQuery();
+  const vehicles = useMemo(
+    () => vehiclesQuery.data ?? [],
+    [vehiclesQuery.data]
+  );
 
-  // Simulate diagnostic scan
-  const startDiagnostic = async () => {
+  // The user's explicit pick. Null means "not chosen yet", which lets the
+  // default below apply without an effect that copies data into state — that
+  // pattern costs an extra render and can cascade.
+  const [pickedVehicleId, setPickedVehicleId] = useState<number | null>(null);
+  const [diagnosticId, setDiagnosticId] = useState<number | null>(() =>
+    numericParam(search, "diagnosticId")
+  );
+
+  const defaultVehicleId = useMemo(() => {
+    const fromQuery = numericParam(search, "vehicleId");
+    if (fromQuery && vehicles.some(vehicle => vehicle.id === fromQuery))
+      return fromQuery;
+    return vehicles.length === 1 ? vehicles[0].id : null;
+  }, [search, vehicles]);
+
+  const selectedVehicleId = pickedVehicleId ?? defaultVehicleId;
+
+  const diagnosticQuery = trpc.obd.diagnostics.getById.useQuery(
+    { diagnosticId: diagnosticId ?? 0 },
+    { enabled: diagnosticId !== null }
+  );
+  const parametersQuery = trpc.obd.diagnostics.getParameters.useQuery(
+    { diagnosticId: diagnosticId ?? 0 },
+    { enabled: diagnosticId !== null }
+  );
+  const errorCodesQuery = trpc.obd.diagnostics.getErrorCodes.useQuery(
+    { diagnosticId: diagnosticId ?? 0 },
+    { enabled: diagnosticId !== null }
+  );
+  const llmStatusQuery = trpc.llm.status.useQuery();
+
+  const diagnostic = diagnosticQuery.data ?? null;
+  const parameters = parametersQuery.data ?? [];
+  const errorCodes = errorCodesQuery.data ?? [];
+  const vehicle =
+    vehicles.find(candidate => candidate.id === diagnostic?.vehicleId) ?? null;
+
+  const simulate = trpc.obd.mock.simulateDiagnostic.useMutation();
+  const analyze = trpc.llm.analyzeDiagnostic.useMutation();
+
+  const startDiagnostic = trpc.obd.diagnostics.start.useMutation({
+    onError: error => toast.error(error.message),
+  });
+
+  const isScanning = startDiagnostic.isPending || simulate.isPending;
+
+  async function handleStart() {
     if (!selectedVehicleId) {
-      alert("Bitte wählen Sie ein Fahrzeug aus");
+      toast.error("Bitte wählen Sie ein Fahrzeug aus");
       return;
     }
 
-    setIsScanning(true);
-    setScanProgress(0);
-
-    // Simulate scanning progress
-    const interval = setInterval(() => {
-      setScanProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return prev + Math.random() * 30;
-      });
-    }, 500);
-
-    // Simulate diagnostic data
-    setTimeout(() => {
-      setDiagnosticSession({
-        id: 1,
+    try {
+      const started = await startDiagnostic.mutateAsync({
         vehicleId: selectedVehicleId,
-        status: "completed",
-        errorCount: 1,
-        warningCount: 2,
-        engineTemperature: "92°C",
-        rpm: "1250 rpm",
-        speed: "45 km/h",
-        fuelPressure: "55 psi",
-        oxygenSensor: "0.45 V",
-        parameters: [
-          {
-            id: 1,
-            parameterId: "010C",
-            parameterName: "Engine RPM",
-            value: "1250",
-            unit: "rpm",
-            minValue: "0",
-            maxValue: "8000",
-            isNormal: true,
-          },
-          {
-            id: 2,
-            parameterId: "010D",
-            parameterName: "Vehicle Speed",
-            value: "45",
-            unit: "km/h",
-            minValue: "0",
-            maxValue: "300",
-            isNormal: true,
-          },
-          {
-            id: 3,
-            parameterId: "0105",
-            parameterName: "Engine Coolant Temperature",
-            value: "92",
-            unit: "°C",
-            minValue: "-40",
-            maxValue: "215",
-            isNormal: true,
-          },
-          {
-            id: 4,
-            parameterId: "010A",
-            parameterName: "Fuel Pressure",
-            value: "55",
-            unit: "psi",
-            minValue: "30",
-            maxValue: "70",
-            isNormal: true,
-          },
-          {
-            id: 5,
-            parameterId: "0114",
-            parameterName: "O2 Sensor (Bank 1, Sensor 1)",
-            value: "0.45",
-            unit: "V",
-            minValue: "0",
-            maxValue: "1",
-            isNormal: true,
-          },
-        ],
-        errorCodes: [
-          {
-            id: 1,
-            code: "P0101",
-            description: "Mass or Volume Air Flow Circuit Range/Performance",
-            severity: "warning",
-            system: "Engine",
-          },
-          {
-            id: 2,
-            code: "P0300",
-            description: "Random/Multiple Cylinder Misfire Detected",
-            severity: "error",
-            system: "Engine",
-          },
-          {
-            id: 3,
-            code: "P0171",
-            description: "System Too Lean (Bank 1)",
-            severity: "warning",
-            system: "Fuel System",
-          },
-        ],
+        diagnosticType: "full_scan",
       });
 
-      setIsScanning(false);
-      clearInterval(interval);
-    }, 5000);
-  };
+      // Without connected hardware the simulator fills the session. Every row
+      // it writes is flagged isSimulated and labelled in the UI below.
+      await simulate.mutateAsync({ diagnosticId: started.diagnosticId });
 
-  const stopDiagnostic = () => {
-    setIsScanning(false);
-    setScanProgress(0);
-  };
+      setDiagnosticId(started.diagnosticId);
+      await Promise.all([
+        utils.obd.diagnostics.invalidate(),
+        utils.obd.vehicles.list.invalidate(),
+      ]);
+      toast.success("Diagnose abgeschlossen");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Diagnose fehlgeschlagen"
+      );
+    }
+  }
 
-  const resetDiagnostic = () => {
-    setDiagnosticSession(null);
-    setScanProgress(0);
-  };
+  function handleReset() {
+    setDiagnosticId(null);
+    analyze.reset();
+  }
+
+  function handleDownload() {
+    if (!diagnostic) return;
+    downloadReportCsv({
+      vehicle,
+      diagnostic,
+      parameters,
+      errorCodes,
+    });
+  }
+
+  const analysisByCode = useMemo(
+    () =>
+      new Map(
+        (analyze.data?.analyses ?? []).map(analysis => [
+          analysis.code,
+          analysis,
+        ])
+      ),
+    [analyze.data]
+  );
+
+  const hasSimulatedData = parameters.some(parameter => parameter.isSimulated);
+  const isLoadingDiagnostic =
+    diagnosticId !== null &&
+    (diagnosticQuery.isLoading ||
+      parametersQuery.isLoading ||
+      errorCodesQuery.isLoading);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-blue-900/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={APP_LOGO} alt="AutoKI Logo" className="h-10 w-10" />
-            <span className="text-xl font-bold text-white">OBD Diagnose</span>
-          </div>
-          <Button
-            variant="ghost"
-            className="text-blue-300 hover:text-blue-100"
-            onClick={() => (window.location.href = "/dashboard")}
-          >
-            ← Zurück zum Dashboard
-          </Button>
-        </div>
-      </nav>
+      <AppNav title="OBD Diagnose" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
         <div className="mb-12">
-          <h1 className="text-4xl font-bold text-white mb-2">OBD-II Diagnose Interface</h1>
+          <h1 className="text-4xl font-bold text-white mb-2">
+            OBD-II Diagnose Interface
+          </h1>
           <p className="text-blue-200">
-            Verbinden Sie Ihr OBD-Kabel und führen Sie eine vollständige Fahrzeugdiagnose durch
+            Wählen Sie ein Fahrzeug und führen Sie eine vollständige Diagnose
+            durch. Für Live-Daten von echter Hardware nutzen Sie die
+            Echtzeit-Diagnose.
           </p>
         </div>
 
-        {/* Control Panel */}
         <Card className="bg-slate-800/50 border-blue-500/20 mb-8">
           <CardHeader>
             <CardTitle className="text-white">Diagnose-Steuerung</CardTitle>
             <CardDescription className="text-blue-300">
-              Starten Sie eine Diagnose-Sitzung mit Ihrem OBD-Gerät
+              Starten Sie eine Diagnose-Sitzung für eines Ihrer Fahrzeuge
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Vehicle Selection */}
-            <div>
-              <label className="block text-sm font-medium text-blue-200 mb-2">
+            <div className="space-y-2">
+              <Label className="text-blue-200" htmlFor="vehicle-select">
                 Fahrzeug auswählen
-              </label>
-              <select
-                value={selectedVehicleId || ""}
-                onChange={(e) => setSelectedVehicleId(Number(e.target.value))}
-                className="w-full px-4 py-2 bg-slate-700 border border-blue-500/30 rounded-lg text-white focus:outline-none focus:border-blue-500"
-              >
-                <option value="">-- Fahrzeug wählen --</option>
-                <option value="1">BMW 320i (2022)</option>
-                <option value="2">Mercedes C-Klasse (2021)</option>
-                <option value="3">Audi A4 (2023)</option>
-              </select>
+              </Label>
+              {vehiclesQuery.isLoading ? (
+                <p className="text-blue-300 text-sm">
+                  Fahrzeuge werden geladen…
+                </p>
+              ) : vehicles.length === 0 ? (
+                <p className="text-blue-300 text-sm">
+                  Sie haben noch kein Fahrzeug registriert. Legen Sie zuerst im
+                  Dashboard eines an.
+                </p>
+              ) : (
+                <Select
+                  value={selectedVehicleId ? String(selectedVehicleId) : ""}
+                  onValueChange={value => setPickedVehicleId(Number(value))}
+                >
+                  <SelectTrigger
+                    id="vehicle-select"
+                    className="bg-slate-700 border-blue-500/30 text-white"
+                  >
+                    <SelectValue placeholder="— Fahrzeug wählen —" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vehicles.map(candidate => (
+                      <SelectItem
+                        key={candidate.id}
+                        value={String(candidate.id)}
+                      >
+                        {candidate.make} {candidate.model} ({candidate.year})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
-            {/* OBD Device Connection */}
-            <div className="p-4 bg-slate-700/50 rounded-lg border border-blue-500/20">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-blue-200">OBD-Gerät Status</span>
-                <Badge className="bg-green-600/20 text-green-300">
-                  <Activity className="h-3 w-3 mr-1" />
-                  Verbunden
-                </Badge>
-              </div>
-              <p className="text-xs text-blue-300">ELM327 Bluetooth Adapter (COM3)</p>
-            </div>
-
-            {/* Control Buttons */}
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4">
               <Button
-                onClick={startDiagnostic}
+                onClick={() => void handleStart()}
                 disabled={isScanning || !selectedVehicleId}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                className="flex-1 min-w-[12rem] bg-green-600 hover:bg-green-700 text-white"
               >
-                <Play className="h-4 w-4 mr-2" />
-                Diagnose starten
+                {isScanning ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Play className="h-4 w-4 mr-2" />
+                )}
+                {isScanning ? "Scan läuft…" : "Diagnose starten"}
               </Button>
               <Button
-                onClick={stopDiagnostic}
-                disabled={!isScanning}
+                onClick={handleReset}
+                disabled={diagnosticId === null || isScanning}
                 variant="outline"
-                className="flex-1 border-red-500/30 text-red-300 hover:bg-red-950"
-              >
-                <StopCircle className="h-4 w-4 mr-2" />
-                Stoppen
-              </Button>
-              <Button
-                onClick={resetDiagnostic}
-                variant="outline"
-                className="flex-1 border-blue-500/30 text-blue-300 hover:bg-blue-950"
+                className="flex-1 min-w-[12rem] border-blue-500/30 text-blue-300 hover:bg-blue-950"
               >
                 <RotateCcw className="h-4 w-4 mr-2" />
                 Zurücksetzen
               </Button>
             </div>
-
-            {/* Progress Bar */}
-            {isScanning && (
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-blue-200">Scan läuft...</span>
-                  <span className="text-sm font-semibold text-blue-300">{Math.round(scanProgress)}%</span>
-                </div>
-                <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="bg-gradient-to-r from-blue-500 to-cyan-400 h-full transition-all duration-300"
-                    style={{ width: `${scanProgress}%` }}
-                  />
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
 
-        {/* Results */}
-        {diagnosticSession && (
+        {isLoadingDiagnostic && (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 text-blue-400 animate-spin" />
+          </div>
+        )}
+
+        {diagnostic && !isLoadingDiagnostic && (
           <div className="space-y-8">
-            {/* Summary */}
-            <div className="grid md:grid-cols-4 gap-6">
-              <Card className="bg-slate-800/50 border-blue-500/20">
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-green-400 mb-1">
-                      {diagnosticSession.status === "completed" ? "✓" : "●"}
-                    </div>
-                    <p className="text-blue-200 text-sm">Status</p>
-                    <p className="text-white font-semibold capitalize">
-                      {diagnosticSession.status === "completed" ? "Abgeschlossen" : "Läuft"}
-                    </p>
-                  </div>
+            {hasSimulatedData && (
+              <Card className="bg-amber-950/40 border-amber-500/40">
+                <CardContent className="pt-6 flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-amber-300 shrink-0 mt-0.5" />
+                  <p className="text-amber-200 text-sm">
+                    Diese Diagnose enthält <strong>simulierte Werte</strong>.
+                    Sie stammen nicht von einem angeschlossenen Fahrzeug und
+                    eignen sich nicht als Grundlage für eine
+                    Reparaturentscheidung.
+                  </p>
                 </CardContent>
               </Card>
+            )}
 
+            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
+              <Card className="bg-slate-800/50 border-blue-500/20">
+                <CardContent className="pt-6 text-center">
+                  <Activity className="h-8 w-8 text-blue-400 mx-auto mb-1" />
+                  <p className="text-blue-200 text-sm">Status</p>
+                  <p className="text-white font-semibold">
+                    {DIAGNOSTIC_STATUS_LABELS[diagnostic.status] ??
+                      diagnostic.status}
+                  </p>
+                </CardContent>
+              </Card>
               <Card className="bg-slate-800/50 border-red-500/20">
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <AlertTriangle className="h-8 w-8 text-red-400 mx-auto mb-1" />
-                    <p className="text-blue-200 text-sm">Fehler</p>
-                    <p className="text-white font-semibold">{diagnosticSession.errorCount}</p>
-                  </div>
+                <CardContent className="pt-6 text-center">
+                  <AlertTriangle className="h-8 w-8 text-red-400 mx-auto mb-1" />
+                  <p className="text-blue-200 text-sm">Fehler</p>
+                  <p className="text-white font-semibold">
+                    {diagnostic.errorCount}
+                  </p>
                 </CardContent>
               </Card>
-
               <Card className="bg-slate-800/50 border-yellow-500/20">
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <AlertTriangle className="h-8 w-8 text-yellow-400 mx-auto mb-1" />
-                    <p className="text-blue-200 text-sm">Warnungen</p>
-                    <p className="text-white font-semibold">{diagnosticSession.warningCount}</p>
-                  </div>
+                <CardContent className="pt-6 text-center">
+                  <AlertTriangle className="h-8 w-8 text-yellow-400 mx-auto mb-1" />
+                  <p className="text-blue-200 text-sm">Warnungen</p>
+                  <p className="text-white font-semibold">
+                    {diagnostic.warningCount}
+                  </p>
                 </CardContent>
               </Card>
-
               <Card className="bg-slate-800/50 border-blue-500/20">
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <Zap className="h-8 w-8 text-blue-400 mx-auto mb-1" />
-                    <p className="text-blue-200 text-sm">Parameter</p>
-                    <p className="text-white font-semibold">{diagnosticSession.parameters.length}</p>
-                  </div>
+                <CardContent className="pt-6 text-center">
+                  <Zap className="h-8 w-8 text-blue-400 mx-auto mb-1" />
+                  <p className="text-blue-200 text-sm">Parameter</p>
+                  <p className="text-white font-semibold">
+                    {parameters.length}
+                  </p>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Detailed Results */}
             <Tabs defaultValue="parameters" className="space-y-6">
               <TabsList className="bg-slate-800/50 border border-blue-500/20">
                 <TabsTrigger value="parameters" className="text-blue-200">
                   OBD-Parameter
                 </TabsTrigger>
                 <TabsTrigger value="errors" className="text-blue-200">
-                  Fehlercodes ({diagnosticSession.errorCodes.length})
+                  Fehlercodes ({errorCodes.length})
                 </TabsTrigger>
                 <TabsTrigger value="summary" className="text-blue-200">
                   Zusammenfassung
                 </TabsTrigger>
               </TabsList>
 
-              {/* Parameters Tab */}
               <TabsContent value="parameters" className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-6">
-                  {diagnosticSession.parameters.map((param) => (
-                    <Card
-                      key={param.id}
-                      className={`bg-slate-800/50 border-2 ${
-                        param.isNormal ? "border-green-500/30" : "border-red-500/30"
-                      }`}
-                    >
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <CardTitle className="text-white text-lg">
-                              {param.parameterName}
-                            </CardTitle>
-                            <CardDescription className="text-blue-300">
-                              {param.parameterId}
-                            </CardDescription>
-                          </div>
-                          <Badge
-                            className={
-                              param.isNormal
-                                ? "bg-green-600/20 text-green-300"
-                                : "bg-red-600/20 text-red-300"
-                            }
-                          >
-                            {param.isNormal ? "OK" : "FEHLER"}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-blue-300">Aktueller Wert:</span>
-                            <span className="text-2xl font-bold text-white">
-                              {param.value} {param.unit}
-                            </span>
-                          </div>
-                          {param.minValue && param.maxValue && (
-                            <div className="text-sm text-blue-300">
-                              Bereich: {param.minValue} - {param.maxValue} {param.unit}
-                            </div>
-                          )}
-                          <div className="w-full bg-slate-700 rounded-full h-2">
-                            <div
-                              className="bg-gradient-to-r from-blue-500 to-cyan-400 h-full rounded-full"
-                              style={{
-                                width: `${
-                                  ((parseFloat(param.value) - parseFloat(param.minValue || "0")) /
-                                    (parseFloat(param.maxValue || "100") -
-                                      parseFloat(param.minValue || "0"))) *
-                                  100
-                                }%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </TabsContent>
-
-              {/* Error Codes Tab */}
-              <TabsContent value="errors" className="space-y-4">
-                {diagnosticSession.errorCodes.length > 0 ? (
-                  diagnosticSession.errorCodes.map((error) => (
-                    <Card
-                      key={error.id}
-                      className={`bg-slate-800/50 border-l-4 ${
-                        error.severity === "critical"
-                          ? "border-l-red-600"
-                          : error.severity === "error"
-                            ? "border-l-red-500"
-                            : "border-l-yellow-500"
-                      }`}
-                    >
-                      <CardContent className="pt-6">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <code className="text-lg font-bold text-blue-300">{error.code}</code>
-                              <Badge
-                                className={
-                                  error.severity === "critical"
-                                    ? "bg-red-600/20 text-red-300"
-                                    : error.severity === "error"
-                                      ? "bg-red-600/20 text-red-300"
-                                      : "bg-yellow-600/20 text-yellow-300"
-                                }
-                              >
-                                {error.severity.toUpperCase()}
-                              </Badge>
-                              <Badge className="bg-blue-600/20 text-blue-300">{error.system}</Badge>
-                            </div>
-                            <p className="text-white">{error.description}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <Card className="bg-slate-800/50 border-green-500/20">
-                    <CardContent className="pt-6 text-center">
-                      <p className="text-green-300">✓ Keine Fehlercodes gefunden</p>
+                {parameters.length === 0 ? (
+                  <Card className="bg-slate-800/50 border-blue-500/20">
+                    <CardContent className="pt-6 text-center text-blue-200">
+                      Keine Parameter erfasst
                     </CardContent>
                   </Card>
+                ) : (
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {parameters.map(parameter => (
+                      <Card
+                        key={parameter.id}
+                        className={`bg-slate-800/50 border-2 ${
+                          parameter.isNormal
+                            ? "border-green-500/30"
+                            : "border-red-500/30"
+                        }`}
+                      >
+                        <CardHeader>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <CardTitle className="text-white text-lg">
+                                {parameter.parameterName}
+                              </CardTitle>
+                              <CardDescription className="text-blue-300">
+                                PID {parameter.parameterId}
+                              </CardDescription>
+                            </div>
+                            <Badge
+                              className={
+                                parameter.isNormal
+                                  ? "bg-green-600/20 text-green-300 shrink-0"
+                                  : "bg-red-600/20 text-red-300 shrink-0"
+                              }
+                            >
+                              {parameter.isNormal ? "OK" : "AUFFÄLLIG"}
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-blue-300">
+                              Aktueller Wert:
+                            </span>
+                            <span className="text-2xl font-bold text-white">
+                              {formatMeasurement(
+                                parameter.value,
+                                parameter.unit
+                              )}
+                            </span>
+                          </div>
+                          {parameter.minValue !== null &&
+                            parameter.maxValue !== null && (
+                              <>
+                                <div className="text-sm text-blue-300">
+                                  Bereich:{" "}
+                                  {formatMeasurement(
+                                    parameter.minValue,
+                                    parameter.unit
+                                  )}{" "}
+                                  –{" "}
+                                  {formatMeasurement(
+                                    parameter.maxValue,
+                                    parameter.unit
+                                  )}
+                                </div>
+                                <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+                                  <div
+                                    className="bg-gradient-to-r from-blue-500 to-cyan-400 h-full rounded-full"
+                                    style={{
+                                      width: `${toPercent(
+                                        parameter.value,
+                                        parameter.minValue,
+                                        parameter.maxValue
+                                      )}%`,
+                                    }}
+                                  />
+                                </div>
+                              </>
+                            )}
+                          {parameter.isSimulated && (
+                            <p className="text-xs text-amber-300">
+                              Simulierter Wert
+                            </p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 )}
               </TabsContent>
 
-              {/* Summary Tab */}
+              <TabsContent value="errors" className="space-y-4">
+                {errorCodes.length > 0 && (
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={() =>
+                        analyze.mutate({ diagnosticId: diagnostic.id })
+                      }
+                      disabled={
+                        analyze.isPending || !llmStatusQuery.data?.available
+                      }
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      {analyze.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-4 w-4 mr-2" />
+                      )}
+                      KI-Analyse
+                    </Button>
+                  </div>
+                )}
+
+                {llmStatusQuery.data &&
+                  !llmStatusQuery.data.available &&
+                  errorCodes.length > 0 && (
+                    <p className="text-sm text-blue-300">
+                      Kein KI-Anbieter konfiguriert — es werden hinterlegte
+                      Standardhinweise verwendet.
+                    </p>
+                  )}
+
+                {analyze.error && (
+                  <p className="text-sm text-red-400">
+                    {analyze.error.message}
+                  </p>
+                )}
+
+                {errorCodes.length === 0 ? (
+                  <Card className="bg-slate-800/50 border-green-500/20">
+                    <CardContent className="pt-6 text-center">
+                      <p className="text-green-300">
+                        ✓ Keine Fehlercodes gefunden
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  errorCodes.map(errorCode => {
+                    const analysis = analysisByCode.get(errorCode.code);
+                    return (
+                      <Card
+                        key={errorCode.id}
+                        className={`bg-slate-800/50 border-l-4 ${
+                          errorCode.severity === "critical"
+                            ? "border-l-red-600"
+                            : errorCode.severity === "error"
+                              ? "border-l-orange-500"
+                              : "border-l-yellow-500"
+                        }`}
+                      >
+                        <CardContent className="pt-6 space-y-3">
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <code className="text-lg font-bold text-blue-300">
+                              {errorCode.code}
+                            </code>
+                            <Badge
+                              className={SEVERITY_CLASSES[errorCode.severity]}
+                            >
+                              {SEVERITY_LABELS[errorCode.severity] ??
+                                errorCode.severity}
+                            </Badge>
+                            {errorCode.system && (
+                              <Badge className="bg-blue-600/20 text-blue-300">
+                                {errorCode.system}
+                              </Badge>
+                            )}
+                          </div>
+                          {errorCode.description && (
+                            <p className="text-white">
+                              {errorCode.description}
+                            </p>
+                          )}
+
+                          {analysis && (
+                            <div className="mt-4 p-4 bg-blue-600/10 border border-blue-500/30 rounded-lg space-y-2">
+                              <p className="text-blue-200 text-sm font-semibold">
+                                Analyse
+                                <span className="ml-2 font-normal text-blue-400">
+                                  (
+                                  {analysis.source === "fallback"
+                                    ? "Standardhinweis"
+                                    : analysis.source}
+                                  )
+                                </span>
+                              </p>
+                              <p className="text-blue-100 text-sm">
+                                {analysis.rootCause}
+                              </p>
+                              <ul className="text-blue-300 text-sm space-y-1 list-disc list-inside">
+                                {analysis.recommendations.map(
+                                  recommendation => (
+                                    <li key={recommendation}>
+                                      {recommendation}
+                                    </li>
+                                  )
+                                )}
+                              </ul>
+                              <p className="text-blue-300 text-sm">
+                                Geschätzte Kosten:{" "}
+                                {analysis.estimatedRepairCost}
+                              </p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })
+                )}
+              </TabsContent>
+
               <TabsContent value="summary" className="space-y-4">
                 <Card className="bg-slate-800/50 border-blue-500/20">
                   <CardHeader>
-                    <CardTitle className="text-white">Diagnose-Zusammenfassung</CardTitle>
+                    <CardTitle className="text-white">
+                      Diagnose-Zusammenfassung
+                    </CardTitle>
+                    <CardDescription className="text-blue-300">
+                      {vehicle
+                        ? `${vehicle.make} ${vehicle.model} (${vehicle.year})`
+                        : "Fahrzeug"}{" "}
+                      · {formatDateTime(diagnostic.startedAt)}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="p-4 bg-slate-700/50 rounded-lg">
-                        <p className="text-blue-300 text-sm mb-1">Motortemperatur</p>
-                        <p className="text-2xl font-bold text-white flex items-center gap-2">
-                          <Thermometer className="h-5 w-5 text-red-400" />
-                          {diagnosticSession.engineTemperature}
-                        </p>
-                      </div>
-                      <div className="p-4 bg-slate-700/50 rounded-lg">
-                        <p className="text-blue-300 text-sm mb-1">Drehzahl</p>
-                        <p className="text-2xl font-bold text-white flex items-center gap-2">
-                          <Gauge className="h-5 w-5 text-blue-400" />
-                          {diagnosticSession.rpm}
-                        </p>
-                      </div>
-                      <div className="p-4 bg-slate-700/50 rounded-lg">
-                        <p className="text-blue-300 text-sm mb-1">Geschwindigkeit</p>
-                        <p className="text-2xl font-bold text-white">{diagnosticSession.speed}</p>
-                      </div>
-                      <div className="p-4 bg-slate-700/50 rounded-lg">
-                        <p className="text-blue-300 text-sm mb-1">Kraftstoffdruck</p>
-                        <p className="text-2xl font-bold text-white">
-                          {diagnosticSession.fuelPressure}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-6 p-4 bg-blue-600/10 border border-blue-500/30 rounded-lg">
-                      <p className="text-blue-200 text-sm mb-2">Empfehlungen:</p>
-                      <ul className="text-blue-300 text-sm space-y-1">
-                        <li>• Überprüfen Sie die Luftmassenmesser-Sensoren</li>
-                        <li>• Zündkerzen und Zündspulen inspizieren</li>
-                        <li>• Kraftstoffdruck und Einspritzer überprüfen</li>
-                        <li>• Katalysator auf Verschleiß prüfen</li>
-                      </ul>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      {[
+                        {
+                          label: "Motortemperatur",
+                          value: diagnostic.engineTemperature,
+                          unit: "°C",
+                        },
+                        {
+                          label: "Drehzahl",
+                          value: diagnostic.rpm,
+                          unit: "rpm",
+                        },
+                        {
+                          label: "Geschwindigkeit",
+                          value: diagnostic.speed,
+                          unit: "km/h",
+                        },
+                        {
+                          label: "Kraftstoffdruck",
+                          value: diagnostic.fuelPressure,
+                          unit: "kPa",
+                        },
+                        {
+                          label: "Lambdasonde",
+                          value: diagnostic.oxygenSensor,
+                          unit: "V",
+                        },
+                      ].map(entry => (
+                        <div
+                          key={entry.label}
+                          className="p-4 bg-slate-700/50 rounded-lg"
+                        >
+                          <p className="text-blue-300 text-sm mb-1">
+                            {entry.label}
+                          </p>
+                          <p className="text-2xl font-bold text-white flex items-center gap-2">
+                            <Gauge className="h-5 w-5 text-blue-400 shrink-0" />
+                            {formatMeasurement(entry.value, entry.unit)}
+                          </p>
+                        </div>
+                      ))}
                     </div>
                   </CardContent>
                 </Card>
 
-                <div className="flex gap-4">
-                  <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
-                    <Download className="h-4 w-4 mr-2" />
-                    Bericht herunterladen
-                  </Button>
-                  <Button variant="outline" className="flex-1 border-blue-500/30 text-blue-300">
-                    Bericht per E-Mail
-                  </Button>
-                </div>
+                <Button
+                  onClick={handleDownload}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Bericht als CSV herunterladen
+                </Button>
               </TabsContent>
             </Tabs>
           </div>
         )}
 
-        {/* No Session */}
-        {!diagnosticSession && !isScanning && (
+        {diagnosticId === null && !isScanning && (
           <Card className="bg-slate-800/50 border-blue-500/20">
             <CardContent className="pt-12 pb-12 text-center">
               <Activity className="h-16 w-16 text-blue-400 mx-auto mb-4 opacity-50" />

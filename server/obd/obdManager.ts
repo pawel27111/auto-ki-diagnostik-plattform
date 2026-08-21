@@ -1,20 +1,35 @@
-import { SerialPort } from "serialport";
 import { EventEmitter } from "events";
-
-// OBD Parser interface (simplified)
-interface OBDParser {
-  parse(data: string): any;
-}
+import { SerialPort } from "serialport";
+import {
+  DEFAULT_SCAN_PIDS,
+  decodeMode01Response,
+  decodeMode03Response,
+  getPidDefinition,
+  isNormalReading,
+  ObdProtocolError,
+  severityForCode,
+  type CountByteMode,
+  type Severity,
+} from "./protocol";
 
 /**
  * OBD Hardware Manager
- * Handles communication with ELM327 and D-CAN adapters via serial port
+ *
+ * Owns the serial transport to ELM327 and D-CAN adapters. An ELM327 is a
+ * strictly request/response device with a single outstanding command: it writes
+ * a command, streams the answer, then prints a ">" prompt. Everything here is
+ * built around that fact — commands per port run through one queue, and a
+ * response is only complete once the prompt arrives.
+ *
+ * Wire-format decoding lives in protocol.ts so it can be tested without hardware.
  */
+
+export type DeviceType = "elm327" | "dcan";
 
 export interface OBDDevice {
   port: string;
   baudRate: number;
-  type: "elm327" | "dcan";
+  type: DeviceType;
   isConnected: boolean;
   lastUpdate: Date;
 }
@@ -22,93 +37,130 @@ export interface OBDDevice {
 export interface OBDParameter {
   pid: string;
   name: string;
-  value: number | string;
+  value: number;
   unit: string;
+  isNormal: boolean;
   timestamp: Date;
+  /** Always false here — this manager only reports real hardware readings. */
+  isSimulated: false;
 }
 
 export interface OBDError {
   code: string;
   description: string;
-  severity: "info" | "warning" | "error" | "critical";
+  severity: Severity;
+  system: string;
 }
 
+interface PendingCommand {
+  command: string;
+  timeoutMs: number;
+  resolve: (response: string) => void;
+  reject: (error: Error) => void;
+}
+
+interface Connection {
+  serialPort: SerialPort;
+  state: OBDDevice;
+  /** Bytes received since the last ">" prompt. */
+  buffer: string;
+  /** Commands waiting to be written; the head is the one in flight. */
+  queue: PendingCommand[];
+  inFlight: PendingCommand | null;
+  timer: NodeJS.Timeout | null;
+  countByte: CountByteMode;
+}
+
+const DEFAULT_COMMAND_TIMEOUT_MS = 5000;
+/** ELM327 resets take noticeably longer than a data request. */
+const RESET_TIMEOUT_MS = 10000;
+const ELM_PROMPT = ">";
+
 export class OBDManager extends EventEmitter {
-  private devices: Map<string, SerialPort> = new Map();
-  private obdParsers: Map<string, OBDParser | null> = new Map();
-  private connectionStates: Map<string, OBDDevice> = new Map();
-  private scanIntervals: Map<string, NodeJS.Timeout> = new Map();
+  private connections: Map<string, Connection> = new Map();
+  private scanTimers: Map<string, NodeJS.Timeout> = new Map();
+  /** Ports with a scan cycle currently in flight, to stop cycles overlapping. */
+  private scanning: Set<string> = new Set();
 
   /**
-   * Initialize OBD device connection
+   * Open a serial connection and run the adapter initialisation sequence.
+   *
+   * Resolves once the adapter has answered the init commands, so a caller that
+   * gets `true` can immediately request data.
    */
   async connectDevice(
     port: string,
-    type: "elm327" | "dcan" = "elm327",
-    baudRate: number = 9600
+    type: DeviceType = "elm327",
+    baudRate: number = 38400
   ): Promise<boolean> {
+    if (this.connections.has(port)) {
+      throw new Error(`Port ${port} is already connected`);
+    }
+
+    const serialPort = new SerialPort({
+      path: port,
+      baudRate,
+      autoOpen: false,
+    });
+
+    const connection: Connection = {
+      serialPort,
+      state: {
+        port,
+        baudRate,
+        type,
+        isConnected: false,
+        lastUpdate: new Date(),
+      },
+      buffer: "",
+      queue: [],
+      inFlight: null,
+      timer: null,
+      countByte: type === "dcan" ? "present" : "auto",
+    };
+
+    serialPort.on("data", chunk =>
+      this.handleData(port, chunk.toString("ascii"))
+    );
+    serialPort.on("error", error => {
+      console.error(`[OBD] Error on ${port}:`, error);
+      this.emit("error", { port, error: error.message });
+    });
+    serialPort.on("close", () => {
+      console.log(`[OBD] Disconnected from ${port}`);
+      this.failAllPending(port, new Error("Serial port closed"));
+      const existing = this.connections.get(port);
+      if (existing) existing.state.isConnected = false;
+      this.stopScanning(port);
+      this.connections.delete(port);
+      this.emit("disconnected", { port });
+    });
+
     try {
-      // Create serial port connection
-      const serialPort = new SerialPort({
-        path: port,
-        baudRate: baudRate,
-        autoOpen: false,
-      });
-
-      // Handle port open
-      serialPort.on("open", () => {
-        console.log(`[OBD] Connected to ${port}`);
-        this.connectionStates.set(port, {
-          port,
-          baudRate,
-          type,
-          isConnected: true,
-          lastUpdate: new Date(),
-        });
-
-        // Initialize OBD parser
-        this.obdParsers.set(port, null); // Parser will be initialized on first data
-
-        // Send initialization commands
-        this.initializeDevice(port, type);
-
-        this.emit("connected", { port, type });
-      });
-
-      // Handle data reception
-      serialPort.on("data", (data) => {
-        this.handleData(port, data.toString());
-      });
-
-      // Handle errors
-      serialPort.on("error", (error) => {
-        console.error(`[OBD] Error on ${port}:`, error);
-        this.emit("error", { port, error: error.message });
-      });
-
-      // Handle port close
-      serialPort.on("close", () => {
-        console.log(`[OBD] Disconnected from ${port}`);
-        const state = this.connectionStates.get(port);
-        if (state) {
-          state.isConnected = false;
-        }
-        this.emit("disconnected", { port });
-      });
-
-      // Store device reference
-      this.devices.set(port, serialPort);
-
-      // Open the port
       await new Promise<void>((resolve, reject) => {
-        serialPort.open((error) => {
-          if (error) reject(error);
-          else resolve();
-        });
+        serialPort.open(error => (error ? reject(error) : resolve()));
       });
 
+      // Only register once the port is actually open, otherwise a failed open
+      // would leave a dead entry behind that blocks every later attempt.
+      connection.state.isConnected = true;
+      this.connections.set(port, connection);
+
+      await this.initializeDevice(port, type);
+
+      console.log(`[OBD] Connected to ${port} (${type}, ${baudRate} baud)`);
+      this.emit("connected", { port, type });
       return true;
     } catch (error) {
+      this.connections.delete(port);
+      this.failAllPending(
+        port,
+        error instanceof Error ? error : new Error(String(error))
+      );
+      if (serialPort.isOpen) {
+        await new Promise<void>(resolve => serialPort.close(() => resolve()));
+      }
+      serialPort.removeAllListeners();
       console.error(`[OBD] Failed to connect to ${port}:`, error);
       this.emit("error", { port, error: String(error) });
       return false;
@@ -116,266 +168,340 @@ export class OBDManager extends EventEmitter {
   }
 
   /**
-   * Initialize OBD device with setup commands
+   * Run the adapter setup sequence, waiting for each command to be acknowledged.
+   *
+   * The previous implementation fired these on staggered `setTimeout`s without
+   * reading the replies, so a device that was still busy silently dropped them.
    */
-  private initializeDevice(port: string, type: "elm327" | "dcan"): void {
-    const serialPort = this.devices.get(port);
-    if (!serialPort) return;
+  private async initializeDevice(
+    port: string,
+    type: DeviceType
+  ): Promise<void> {
+    const commands: { cmd: string; timeoutMs?: number }[] = [
+      { cmd: "ATZ", timeoutMs: RESET_TIMEOUT_MS }, // reset
+      { cmd: "ATE0" }, // echo off
+      { cmd: "ATL0" }, // linefeeds off
+      { cmd: "ATS0" }, // spaces off
+      { cmd: "ATH0" }, // headers off — protocol.ts does not need them
+      { cmd: "ATST32" }, // ~200 ms adapter timeout
+      // Auto-detect for ELM327; D-CAN adapters are pinned to 11-bit 500 kbps CAN.
+      { cmd: type === "dcan" ? "ATSP6" : "ATSP0" },
+    ];
 
-    if (type === "elm327") {
-      // ELM327 initialization sequence
-      const commands = [
-        "AT Z\r",        // Reset device
-        "AT E0\r",       // Echo off
-        "AT S0\r",       // Spaces off
-        "AT L0\r",       // Linefeeds off
-        "AT SP 0\r",     // Auto protocol detection
-        "AT RA\r",       // Receive address off
-        "AT H1\r",       // Headers on
-        "AT D1\r",       // Display DLC on
-      ];
-
-      commands.forEach((cmd, index) => {
-        setTimeout(() => {
-          serialPort.write(cmd);
-        }, 100 * (index + 1));
-      });
-    } else if (type === "dcan") {
-      // D-CAN initialization
-      const commands = [
-        "AT Z\r",
-        "AT E0\r",
-        "AT SP 6\r",     // Set to CAN 500kbps
-      ];
-
-      commands.forEach((cmd, index) => {
-        setTimeout(() => {
-          serialPort.write(cmd);
-        }, 100 * (index + 1));
-      });
-    }
-  }
-
-  /**
-   * Handle incoming data from OBD device
-   */
-  private handleData(port: string, data: string): void {
-    try {
-      // Parse OBD response
-      const response = data.trim();
-
-      // Emit raw data event
-      this.emit("data", { port, raw: response });
-
-      // Update last update timestamp
-      const state = this.connectionStates.get(port);
-      if (state) {
-        state.lastUpdate = new Date();
+    for (const { cmd, timeoutMs } of commands) {
+      const response = await this.sendCommand(port, cmd, timeoutMs);
+      if (/^\s*\?/.test(response)) {
+        throw new Error(`Adapter rejected initialisation command ${cmd}`);
       }
-    } catch (error) {
-      console.error(`[OBD] Error parsing data from ${port}:`, error);
     }
   }
 
   /**
-   * Request OBD parameter
+   * Queue a command and resolve with the adapter's reply.
+   *
+   * Serialising per port is what makes concurrent reads correct: an ELM327 has
+   * no request ids, so two commands in flight at once cannot be told apart.
+   */
+  sendCommand(
+    port: string,
+    command: string,
+    timeoutMs = DEFAULT_COMMAND_TIMEOUT_MS
+  ): Promise<string> {
+    const connection = this.connections.get(port);
+    if (!connection || !connection.serialPort.isOpen) {
+      return Promise.reject(new Error(`Port ${port} is not open`));
+    }
+
+    return new Promise<string>((resolve, reject) => {
+      connection.queue.push({ command, timeoutMs, resolve, reject });
+      this.drainQueue(port);
+    });
+  }
+
+  private drainQueue(port: string): void {
+    const connection = this.connections.get(port);
+    if (!connection || connection.inFlight) return;
+
+    const next = connection.queue.shift();
+    if (!next) return;
+
+    connection.inFlight = next;
+    connection.buffer = "";
+
+    connection.timer = setTimeout(() => {
+      this.settleInFlight(
+        port,
+        new Error(
+          `Timed out after ${next.timeoutMs}ms waiting for "${next.command}"`
+        )
+      );
+    }, next.timeoutMs);
+
+    connection.serialPort.write(`${next.command}\r`, error => {
+      if (error) {
+        this.settleInFlight(port, error);
+      }
+    });
+  }
+
+  /**
+   * Resolve or reject the in-flight command and start the next one.
+   *
+   * Every exit path for a command goes through here, so the timer is always
+   * cleared and the queue never stalls.
+   */
+  private settleInFlight(
+    port: string,
+    errorOrResponse: Error | { response: string }
+  ): void {
+    const connection = this.connections.get(port);
+    if (!connection) return;
+
+    const pending = connection.inFlight;
+    if (!pending) return;
+
+    if (connection.timer) {
+      clearTimeout(connection.timer);
+      connection.timer = null;
+    }
+    connection.inFlight = null;
+    connection.buffer = "";
+
+    if (errorOrResponse instanceof Error) {
+      pending.reject(errorOrResponse);
+    } else {
+      pending.resolve(errorOrResponse.response);
+    }
+
+    this.drainQueue(port);
+  }
+
+  private failAllPending(port: string, error: Error): void {
+    const connection = this.connections.get(port);
+    if (!connection) return;
+
+    if (connection.timer) {
+      clearTimeout(connection.timer);
+      connection.timer = null;
+    }
+    const pending = connection.inFlight
+      ? [connection.inFlight, ...connection.queue]
+      : [...connection.queue];
+    connection.inFlight = null;
+    connection.queue = [];
+    connection.buffer = "";
+    for (const command of pending) command.reject(error);
+  }
+
+  /**
+   * Accumulate serial data until the ">" prompt marks the response complete.
+   *
+   * Serial data arrives in arbitrary chunks, so a single `data` event is not a
+   * response and cannot be decoded on its own.
+   */
+  private handleData(port: string, chunk: string): void {
+    const connection = this.connections.get(port);
+    if (!connection) return;
+
+    connection.state.lastUpdate = new Date();
+    connection.buffer += chunk;
+    this.emit("data", { port, raw: chunk });
+
+    const promptIndex = connection.buffer.indexOf(ELM_PROMPT);
+    if (promptIndex === -1) return;
+
+    const response = connection.buffer.slice(0, promptIndex);
+    const rest = connection.buffer.slice(promptIndex + 1);
+
+    if (connection.inFlight) {
+      this.settleInFlight(port, { response });
+      // Anything after the prompt belongs to the next response.
+      const current = this.connections.get(port);
+      if (current) current.buffer = rest;
+    } else {
+      // Unsolicited output (for example after a device-side reset).
+      connection.buffer = rest;
+    }
+  }
+
+  /**
+   * Read a single Mode 01 PID.
+   *
+   * Returns null when the ECU does not report the PID; throws when the adapter
+   * or the transport fails, so callers can tell "not supported" from "broken".
    */
   async requestParameter(
     port: string,
-    pid: string,
-    name: string,
-    unit: string
+    pid: string
   ): Promise<OBDParameter | null> {
-    const serialPort = this.devices.get(port);
-    if (!serialPort || !serialPort.isOpen) {
-      console.warn(`[OBD] Port ${port} is not open`);
-      return null;
+    const definition = getPidDefinition(pid);
+    if (!definition) {
+      throw new ObdProtocolError(`Unsupported PID ${pid}`);
     }
 
-    try {
-      // Send OBD request command
-      const command = `01${pid}\r`;
-      serialPort.write(command);
+    const response = await this.sendCommand(port, `01${definition.pid}`);
+    const value = decodeMode01Response(definition.pid, response);
+    if (value === null) return null;
 
-      // Wait for response (simplified - in production use proper async handling)
-      return new Promise((resolve) => {
-        const timeout = setTimeout(() => {
-          resolve(null);
-        }, 1000);
-
-        const responseHandler = (data: any) => {
-          clearTimeout(timeout);
-          this.removeListener("data", responseHandler);
-
-          // Parse response (simplified)
-          const value = Math.random() * 100; // Mock value for demo
-          resolve({
-            pid,
-            name,
-            value,
-            unit,
-            timestamp: new Date(),
-          });
-        };
-
-        this.once("data", responseHandler);
-      });
-    } catch (error) {
-      console.error(`[OBD] Error requesting parameter ${pid}:`, error);
-      return null;
-    }
+    return {
+      pid: definition.pid,
+      name: definition.name,
+      value,
+      unit: definition.unit,
+      isNormal: isNormalReading(definition, value),
+      timestamp: new Date(),
+      isSimulated: false,
+    };
   }
 
   /**
-   * Start continuous scanning
+   * Poll the standard live parameters on an interval.
+   *
+   * A cycle is skipped while the previous one is still running: five PIDs at up
+   * to the command timeout each can take longer than the interval, and stacking
+   * cycles would queue commands faster than the adapter can answer them.
    */
-  startScanning(port: string, interval: number = 1000): void {
-    if (this.scanIntervals.has(port)) {
+  startScanning(
+    port: string,
+    intervalMs: number = 1000,
+    pids: readonly string[] = DEFAULT_SCAN_PIDS
+  ): void {
+    if (this.scanTimers.has(port)) {
       console.warn(`[OBD] Scanning already active on ${port}`);
       return;
     }
 
-    const scanInterval = setInterval(async () => {
-      const state = this.connectionStates.get(port);
-      if (!state || !state.isConnected) {
-        clearInterval(scanInterval);
-        this.scanIntervals.delete(port);
+    // setInterval ignores the returned promise, so the cycle is wrapped in a
+    // void call and every rejection is handled inside runCycle.
+    const runCycle = async () => {
+      const connection = this.connections.get(port);
+      if (!connection || !connection.state.isConnected) {
+        this.stopScanning(port);
         return;
       }
+      if (this.scanning.has(port)) return;
 
-      // Request common OBD parameters
-      const parameters = [
-        { pid: "0C", name: "Engine RPM", unit: "rpm" },
-        { pid: "0D", name: "Vehicle Speed", unit: "km/h" },
-        { pid: "05", name: "Engine Coolant Temperature", unit: "°C" },
-        { pid: "0A", name: "Fuel Pressure", unit: "psi" },
-        { pid: "14", name: "O2 Sensor (Bank 1, Sensor 1)", unit: "V" },
-      ];
-
-      for (const param of parameters) {
-        const result = await this.requestParameter(
-          port,
-          param.pid,
-          param.name,
-          param.unit
-        );
-        if (result) {
-          this.emit("parameter", result);
+      this.scanning.add(port);
+      try {
+        for (const pid of pids) {
+          if (!this.connections.has(port)) break;
+          try {
+            const parameter = await this.requestParameter(port, pid);
+            if (parameter) this.emit("parameter", { port, parameter });
+          } catch (error) {
+            this.emit("parameterError", {
+              port,
+              pid,
+              error: error instanceof Error ? error.message : String(error),
+            });
+          }
         }
+      } finally {
+        this.scanning.delete(port);
       }
-    }, interval);
+    };
 
-    this.scanIntervals.set(port, scanInterval);
-    console.log(`[OBD] Started scanning on ${port} (interval: ${interval}ms)`);
+    const timer = setInterval(() => void runCycle(), intervalMs);
+
+    this.scanTimers.set(port, timer);
+    console.log(
+      `[OBD] Started scanning on ${port} (interval: ${intervalMs}ms)`
+    );
   }
 
-  /**
-   * Stop continuous scanning
-   */
   stopScanning(port: string): void {
-    const interval = this.scanIntervals.get(port);
-    if (interval) {
-      clearInterval(interval);
-      this.scanIntervals.delete(port);
+    const timer = this.scanTimers.get(port);
+    if (timer) {
+      clearInterval(timer);
+      this.scanTimers.delete(port);
       console.log(`[OBD] Stopped scanning on ${port}`);
     }
+    this.scanning.delete(port);
   }
 
-  /**
-   * Disconnect device
-   */
   async disconnectDevice(port: string): Promise<void> {
-    // Stop scanning first
     this.stopScanning(port);
 
-    const serialPort = this.devices.get(port);
-    if (serialPort && serialPort.isOpen) {
-      await new Promise<void>((resolve) => {
-        serialPort.close(() => resolve());
-      });
-    }
+    const connection = this.connections.get(port);
+    if (!connection) return;
 
-    this.devices.delete(port);
-    this.obdParsers.delete(port);
-    this.connectionStates.delete(port);
+    this.failAllPending(port, new Error("Device disconnected"));
+
+    if (connection.serialPort.isOpen) {
+      await new Promise<void>(resolve =>
+        connection.serialPort.close(() => resolve())
+      );
+    }
+    connection.serialPort.removeAllListeners();
+    this.connections.delete(port);
   }
 
-  /**
-   * Get list of available serial ports
-   */
-  async getAvailablePorts(): Promise<string[]> {
+  /** Close every open port. Used on server shutdown. */
+  async disconnectAll(): Promise<void> {
+    await Promise.all(
+      Array.from(this.connections.keys()).map(port =>
+        this.disconnectDevice(port)
+      )
+    );
+  }
+
+  async getAvailablePorts(): Promise<
+    { path: string; manufacturer?: string }[]
+  > {
     try {
       const ports = await SerialPort.list();
-      return ports.map((port) => port.path);
+      return ports.map(port => ({
+        path: port.path,
+        manufacturer: port.manufacturer,
+      }));
     } catch (error) {
       console.error("[OBD] Error listing ports:", error);
       return [];
     }
   }
 
-  /**
-   * Get connection status
-   */
   getConnectionStatus(port: string): OBDDevice | null {
-    return this.connectionStates.get(port) || null;
+    return this.connections.get(port)?.state ?? null;
   }
 
-  /**
-   * Get all active connections
-   */
   getAllConnections(): OBDDevice[] {
-    return Array.from(this.connectionStates.values());
+    return Array.from(this.connections.values()).map(
+      connection => connection.state
+    );
   }
 
-  /**
-   * Read error codes (DTCs)
-   */
+  /** Read stored diagnostic trouble codes (Mode 03). */
   async readErrorCodes(port: string): Promise<OBDError[]> {
-    const serialPort = this.devices.get(port);
-    if (!serialPort || !serialPort.isOpen) {
-      return [];
+    const connection = this.connections.get(port);
+    if (!connection) {
+      throw new Error(`Port ${port} is not open`);
     }
 
-    try {
-      // Request error codes
-      serialPort.write("03\r"); // Read DTC command
+    const response = await this.sendCommand(port, "03");
+    const decoded = decodeMode03Response(response, {
+      countByte: connection.countByte,
+    });
 
-      // In production, properly parse the response
-      // For now, return mock data
-      return [
-        {
-          code: "P0101",
-          description: "Mass or Volume Air Flow Circuit Range/Performance",
-          severity: "warning",
-        },
-        {
-          code: "P0300",
-          description: "Random/Multiple Cylinder Misfire Detected",
-          severity: "error",
-        },
-      ];
-    } catch (error) {
-      console.error(`[OBD] Error reading error codes:`, error);
-      return [];
-    }
+    return decoded.map(({ code, system }) => ({
+      code,
+      // The human-readable text comes from the LLM layer; the adapter only
+      // reports the code itself.
+      description: "",
+      severity: severityForCode(code),
+      system,
+    }));
   }
 
   /**
-   * Clear error codes
+   * Clear stored trouble codes (Mode 04).
+   *
+   * This also erases freeze-frame data and resets readiness monitors on the
+   * vehicle. Callers must confirm with the user first — it cannot be undone.
    */
   async clearErrorCodes(port: string): Promise<boolean> {
-    const serialPort = this.devices.get(port);
-    if (!serialPort || !serialPort.isOpen) {
-      return false;
-    }
-
-    try {
-      serialPort.write("04\r"); // Clear DTC command
-      return true;
-    } catch (error) {
-      console.error(`[OBD] Error clearing error codes:`, error);
-      return false;
-    }
+    const response = await this.sendCommand(port, "04");
+    // A successful clear is acknowledged with 44.
+    return /44/.test(response.replace(/\s/g, ""));
   }
 }
 

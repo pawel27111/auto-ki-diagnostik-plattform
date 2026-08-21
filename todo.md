@@ -1,76 +1,75 @@
-# AutoKI Assistent - Project TODO
+# AutoKI Assistent — Project TODO
 
-## Phase 1: Analysis & Initialization ✓
-- [x] Analyze GitHub project and uploaded binaries
-- [x] Initialize web project with full-stack features (server, db, user)
-- [x] Set up project structure and dependencies
+## Phase 1: Analyse & Initialisierung ✅
+- [x] GitHub-Projekt und Binaries analysieren
+- [x] Full-Stack-Projekt aufsetzen (Server, DB, Auth)
+- [x] Projektstruktur und Abhängigkeiten
 
-## Phase 2: Frontend & Design ✓
-- [x] Create landing page with hero section
-- [x] Design dashboard layout for mechanics
-- [x] Create vehicle diagnostic interface (basic)
-- [x] Design user profile and settings pages (basic)
-- [x] Use Canva for visual assets and branding
-- [x] Implement real-time data visualization for OBD metrics
-- [x] Create diagnostic report templates (basic)
-- [x] Implement responsive mobile design
+## Phase 2: Frontend & Design ✅
+- [x] Landing Page mit Hero-Section
+- [x] Dashboard-Layout
+- [x] Diagnose-Interface
+- [x] Einstellungsseite
+- [x] Visuelle Assets und Branding
+- [x] Datenvisualisierung für OBD-Messwerte
+- [x] Diagnosebericht (CSV-Export)
+- [x] Responsives Design
 
-## Phase 3: Backend & Core Features - OBD PRIORITY ✓
-- [x] Set up database schema for vehicles, diagnostics, and users
-- [x] Create OBD device connection API endpoint
-- [x] Implement OBD parameter reading (RPM, Temperature, Pressure, etc.)
-- [x] Create error code (DTC) reading and interpretation
-- [x] Build diagnostic data processing logic
-- [x] Create vehicle management API
-- [x] Set up real-time data streaming for live diagnostics (mock)
-- [x] Implement diagnostic history and reporting
-- [ ] Integrate EdiabasLib API wrapper (if available)
-- [x] User authentication and authorization
+## Phase 3: Backend & Kernfunktionen ✅
+- [x] Datenbankschema für Fahrzeuge, Diagnosen und Nutzer
+  (inkl. Indizes, Fremdschlüssel und numerischer Messwerttypen)
+- [x] OBD-Geräteverbindung
+- [x] Auslesen von OBD-Parametern (echte SAE-J1979-Dekodierung)
+- [x] Fehlercodes lesen und interpretieren (SAE J2012)
+- [x] Diagnose-Datenverarbeitung
+- [x] Fahrzeugverwaltungs-API
+- [x] Echtzeit-Streaming über Socket.io
+- [x] Diagnose-Historie und Berichte
+- [x] Authentifizierung und Autorisierung
+- [ ] EdiabasLib-Wrapper für herstellerspezifische Diagnose
 
-## Phase 4: Production Features - CRITICAL PRIORITY ✅
+## Phase 4: Produktivfunktionen ✅
 
-### 4.1: Real OBD Hardware Integration ✅
-- [x] Implement WebSocket server for OBD communication
-- [x] Support ELM327 Bluetooth/USB adapters
-- [x] Support D-CAN adapters (BMW, Mercedes, Audi)
-- [x] Real-time parameter streaming from vehicle
-- [x] Error handling and reconnection logic
-- [x] Hardware device discovery and pairing
+### 4.1 OBD-Hardware ✅
+- [x] Socket.io-Server, im Serverstart eingebunden
+- [x] ELM327 über USB/Bluetooth
+- [x] D-CAN-Adapter
+- [x] Parameter-Streaming vom Fahrzeug
+- [x] Fehlerbehandlung, Kommando-Queue, sauberes Verbindungs-Cleanup
+- [x] Port-Erkennung mit serverseitiger Allowlist
 
-### 4.2: LLM Integration (OpenRouter + Local LM Studio) ✅
-- [x] OpenRouter API integration for error code interpretation
-- [x] Local LM Studio support for private model inference
-- [x] Intelligent error code analysis and recommendations
-- [x] Automatic repair suggestions based on diagnostics
-- [x] Support for custom prompts and model selection
-- [x] Fallback mechanism between OpenRouter and LM Studio
+### 4.2 LLM-Integration ✅
+- [x] OpenRouter-Anbindung
+- [x] LM Studio für lokale Inferenz
+- [x] Fehlercode-Analyse mit Reparaturempfehlungen
+- [x] Anbieterwechsel und beidseitiger Fallback
+- [x] Validierung der Modellantwort, Rate-Limiting
 
-### 4.3: Real-time Socket.io Streaming ✅
-- [x] Socket.io server setup for real-time communication
-- [x] Live OBD parameter streaming to frontend
-- [x] Real-time error code notifications
-- [x] Live diagnostic progress updates
-- [x] Multi-client support for team diagnostics
-- [x] Connection state management
+### 4.3 Echtzeit-Streaming ✅
+- [x] Socket.io-Server mit Handshake-Authentifizierung
+- [x] Live-Parameter ins Frontend
+- [x] Fehlercode-Benachrichtigungen
+- [x] Mehrere Clients je Sitzung über Rooms
+- [x] Verbindungs- und Sitzungsverwaltung
 
-## Phase 5: AI & Advanced Features
-- [ ] Implement AI-powered diagnostic analysis
-- [ ] Create anomaly detection for vehicle health
-- [ ] Build predictive maintenance recommendations
-- [ ] Implement natural language queries for diagnostics
-- [ ] Create diagnostic insights and suggestions
+## Phase 5: Sicherheit & Qualität ✅
+- [x] Zugriffskontrolle auf allen Fahrzeug- und Diagnose-Endpunkten
+- [x] CSRF-Schutz (OAuth-Nonce, Origin-Prüfung)
+- [x] Startvalidierung der Konfiguration
+- [x] Testsuite für Protokoll, Zugriffskontrolle, CSRF, Rate-Limiting
+- [x] ESLint mit typbewussten Regeln
+- [x] Asset-Optimierung
 
-## Phase 5: Testing & Optimization
-- [ ] Write unit tests for API endpoints
-- [ ] Write tests for diagnostic logic
-- [ ] Test user authentication flows
-- [ ] Performance optimization
-- [ ] Security audit and hardening
-- [ ] Browser compatibility testing
+## Phase 6: KI & erweiterte Funktionen
+- [ ] Anomalieerkennung über den Diagnoseverlauf
+- [ ] Predictive Maintenance
+- [ ] Natürlichsprachliche Abfragen
+- [ ] Vergleich mehrerer Diagnosen desselben Fahrzeugs
 
-## Phase 6: Deployment & Documentation
-- [ ] Create user documentation
-- [ ] Set up deployment pipeline
-- [ ] Create API documentation
-- [ ] Final testing and QA
-- [ ] Deploy to production
+## Phase 7: Betrieb & Deployment
+- [ ] Aufräumjob für alte OBD-Messwerte (`pruneObdParameters` existiert,
+      wird aber von nichts aufgerufen)
+- [ ] Deployment-Pipeline
+- [ ] Nutzerdokumentation
+- [ ] Bundle-Splitting (aktuell ein Chunk über 500 kB)
+- [ ] Rate-Limiting über mehrere Instanzen (aktuell prozesslokal)

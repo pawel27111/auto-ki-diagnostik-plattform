@@ -15,6 +15,13 @@
       "when": 1764092284481,
       "tag": "0001_moaning_jackal",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1787312431757,
+      "tag": "0002_normal_kingpin",
+      "breakpoints": true
     }
   ]
 }

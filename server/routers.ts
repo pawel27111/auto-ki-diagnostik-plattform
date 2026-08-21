@@ -2,10 +2,12 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
+import { llmRouter } from "./llm/llmRouter";
 import { obdRouter } from "./obdRouter";
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
+  // Socket.io is registered in server/_core/index.ts and served under
+  // /api/socket.io so the gateway routes it like the rest of the API.
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -20,6 +22,9 @@ export const appRouter = router({
 
   // OBD Diagnostic Router
   obd: obdRouter,
+
+  // AI analysis of diagnostic trouble codes
+  llm: llmRouter,
 });
 
 export type AppRouter = typeof appRouter;

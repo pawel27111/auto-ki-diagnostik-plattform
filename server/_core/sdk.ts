@@ -1,4 +1,4 @@
-import { AXIOS_TIMEOUT_MS, COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { AXIOS_TIMEOUT_MS, COOKIE_NAME, SESSION_TTL_MS } from "@shared/const";
 import { ForbiddenError } from "@shared/_core/errors";
 import axios, { type AxiosInstance } from "axios";
 import { parse as parseCookieHeader } from "cookie";
@@ -17,6 +17,13 @@ import type {
 // Utility function
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0;
+
+/**
+ * The OAuth server returns `platform` on some responses and `platforms` on
+ * others depending on the account type, and neither is in the generated type.
+ * Reading them through this shape keeps the access typed instead of `any`.
+ */
+type PlatformFields = { platform?: string | null; platforms?: unknown };
 
 export type SessionPayload = {
   openId: string;
@@ -38,20 +45,22 @@ class OAuthService {
     }
   }
 
-  private decodeState(state: string): string {
-    const redirectUri = atob(state);
-    return redirectUri;
-  }
-
+  /**
+   * Exchange an authorization code.
+   *
+   * `redirectUri` is passed in already decoded and validated by the callback
+   * route; the OAuth `state` parameter is a CSRF nonce and is deliberately not
+   * interpreted here.
+   */
   async getTokenByCode(
     code: string,
-    state: string
+    redirectUri: string
   ): Promise<ExchangeTokenResponse> {
     const payload: ExchangeTokenRequest = {
       clientId: ENV.appId,
       grantType: "authorization_code",
       code,
-      redirectUri: this.decodeState(state),
+      redirectUri,
     };
 
     const { data } = await this.client.post<ExchangeTokenResponse>(
@@ -114,15 +123,18 @@ class SDKServer {
   }
 
   /**
-   * Exchange OAuth authorization code for access token
+   * Exchange OAuth authorization code for access token.
+   *
+   * @param redirectUri the exact URI the authorize request used; the provider
+   * rejects the exchange if it differs.
    * @example
-   * const tokenResponse = await sdk.exchangeCodeForToken(code, state);
+   * const tokenResponse = await sdk.exchangeCodeForToken(code, redirectUri);
    */
   async exchangeCodeForToken(
     code: string,
-    state: string
+    redirectUri: string
   ): Promise<ExchangeTokenResponse> {
-    return this.oauthService.getTokenByCode(code, state);
+    return this.oauthService.getTokenByCode(code, redirectUri);
   }
 
   /**
@@ -134,12 +146,13 @@ class SDKServer {
     const data = await this.oauthService.getUserInfoByToken({
       accessToken,
     } as ExchangeTokenResponse);
+    const extra = data as GetUserInfoResponse & PlatformFields;
     const loginMethod = this.deriveLoginMethod(
-      (data as any)?.platforms,
-      (data as any)?.platform ?? data.platform ?? null
+      extra.platforms,
+      extra.platform ?? null
     );
     return {
-      ...(data as any),
+      ...data,
       platform: loginMethod,
       loginMethod,
     } as GetUserInfoResponse;
@@ -183,7 +196,7 @@ class SDKServer {
     options: { expiresInMs?: number } = {}
   ): Promise<string> {
     const issuedAt = Date.now();
-    const expiresInMs = options.expiresInMs ?? ONE_YEAR_MS;
+    const expiresInMs = options.expiresInMs ?? SESSION_TTL_MS;
     const expirationSeconds = Math.floor((issuedAt + expiresInMs) / 1000);
     const secretKey = this.getSessionSecret();
 
@@ -215,9 +228,16 @@ class SDKServer {
       if (
         !isNonEmptyString(openId) ||
         !isNonEmptyString(appId) ||
-        !isNonEmptyString(name)
+        typeof name !== "string"
       ) {
         console.warn("[Auth] Session payload missing required fields");
+        return null;
+      }
+
+      // The token is only valid for the app it was issued to. Without this a
+      // token minted by any other app sharing this JWT secret would be accepted.
+      if (appId !== ENV.appId) {
+        console.warn("[Auth] Session token was issued for a different appId");
         return null;
       }
 
@@ -245,12 +265,13 @@ class SDKServer {
       payload
     );
 
+    const extra = data as GetUserInfoWithJwtResponse & PlatformFields;
     const loginMethod = this.deriveLoginMethod(
-      (data as any)?.platforms,
-      (data as any)?.platform ?? data.platform ?? null
+      extra.platforms,
+      extra.platform ?? null
     );
     return {
-      ...(data as any),
+      ...data,
       platform: loginMethod,
       loginMethod,
     } as GetUserInfoWithJwtResponse;
@@ -292,10 +313,9 @@ class SDKServer {
       throw ForbiddenError("User not found");
     }
 
-    await db.upsertUser({
-      openId: user.openId,
-      lastSignedIn: signedInAt,
-    });
+    // Refreshing this on every request turned each read into a write. The
+    // throttled variant only writes when the stored value is actually stale.
+    await db.touchLastSignedIn(user.id, signedInAt);
 
     return user;
   }
