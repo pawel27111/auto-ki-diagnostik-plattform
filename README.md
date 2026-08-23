@@ -262,9 +262,15 @@ löscht alte Messwerte; ein Aufrufer dafür ist noch nicht eingerichtet.
 - [ ] Natürlichsprachliche Abfragen
 - [ ] EdiabasLib-Integration für herstellerspezifische Diagnose
 - [ ] Flotten-Management
-- [ ] Mobile App
 - [ ] Aufräumjob für alte Messwerte
 - [ ] Deployment-Pipeline
+
+## 📱 Android-App
+
+Natives Android-Projekt (Kotlin, Jetpack Compose) im [`android/`](android/)
+Verzeichnis — verbindet sich per Bluetooth direkt mit ELM327-/D-CAN-Adaptern
+und spricht mit demselben tRPC-Backend wie diese Web-Oberfläche. Details und
+Build-Anleitung: [android/README.md](android/README.md).
 
 ## 📝 Lizenz
 

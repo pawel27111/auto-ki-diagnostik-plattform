@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  This is a client for a self-hosted platform (see project README) that is often
+  run on a workshop's local network without TLS. Cleartext is therefore allowed
+  by default; deployments reachable from the internet should use HTTPS and can
+  drop the cleartextTrafficPermitted override below.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
