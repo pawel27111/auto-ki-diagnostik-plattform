@@ -7,14 +7,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
@@ -111,6 +111,7 @@ private fun SetupContent(state: DiagnosticUiState.Setup, viewModel: DiagnosticVi
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -244,16 +245,24 @@ private fun RunningContent(state: DiagnosticUiState.Running, viewModel: Diagnost
             state.statusMessage?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
         }
         if (state.readings.isNotEmpty()) {
-            item {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
+            // Laid out as plain Rows rather than a LazyVerticalGrid: a lazy grid
+            // inside a LazyColumn item is measured with an infinite height
+            // constraint and throws. The reading count is bounded by the PID
+            // catalogue anyway, so there is nothing to virtualise.
+            items(
+                state.readings.values.sortedBy { it.pid }.chunked(2),
+                key = { row -> row.first().pid },
+            ) { row ->
+                Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    items(state.readings.values.toList(), key = { it.pid }) { reading ->
-                        ParameterCard(reading)
+                    for (reading in row) {
+                        ParameterCard(reading, modifier = Modifier.weight(1f))
                     }
+                    // Keep a trailing single card at half width instead of
+                    // stretching it across the row.
+                    if (row.size == 1) Spacer(Modifier.weight(1f))
                 }
             }
         } else if (state.simulated.not()) {
