@@ -46,7 +46,7 @@ class SettingsStore(private val context: Context) {
         }
 
     suspend fun setServerBaseUrl(url: String) {
-        context.dataStore.edit { it[Keys.SERVER_BASE_URL] = url.trimEnd('/') }
+        context.dataStore.edit { it[Keys.SERVER_BASE_URL] = url.trim().trimEnd('/') }
     }
 
     suspend fun setSessionCookie(cookie: String?) {

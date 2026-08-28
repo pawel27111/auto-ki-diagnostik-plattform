@@ -49,6 +49,10 @@ Projekts selbst an.
 
 ## Server konfigurieren
 
+Wie der Server dafür auf einem eigenen Laptop eingerichtet wird — Datenbank,
+lokale Anmeldung ohne OAuth-Server, Adresse im WLAN — steht in
+[SETUP-LOKAL.md](../SETUP-LOKAL.md).
+
 Es gibt keine Build-Time-Konfiguration — die Server-Adresse wird beim
 ersten Start in der App eingegeben (Einstellungen-Screen) und in
 `DataStore` gespeichert. Anmeldung läuft über eine `WebView`, die exakt den
