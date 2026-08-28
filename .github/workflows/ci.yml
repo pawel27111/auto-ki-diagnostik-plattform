@@ -1,0 +1,59 @@
+name: CI
+
+# Runs on every pull request and on pushes to main, so "Require status checks
+# before merging" in the branch protection settings has something to require.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A new push supersedes the previous run for the same ref; cancel the old one
+# instead of paying for a result nobody will look at.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Typecheck, lint, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The version comes from the "packageManager" field in package.json, so
+      # CI and local development cannot drift apart.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # --frozen-lockfile fails if the lockfile does not match package.json,
+      # rather than silently resolving different versions than a contributor had.
+      #
+      # The native serialport bindings are not built here: pnpm blocks their
+      # build script by default, and none of the checks below need them — the
+      # OBD protocol layer is pure decoding and the diagnostic core has no I/O.
+      # Anything that does need real hardware cannot run on a CI runner anyway.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+
+      # Kept last: a build failure is the least informative of the four, so the
+      # faster and more specific checks should report first.
+      - name: Build
+        run: pnpm build
