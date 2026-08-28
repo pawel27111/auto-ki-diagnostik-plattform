@@ -20,6 +20,10 @@ export default tseslint.config(
       "drizzle/**/*.sql",
       "*.config.js",
       "client/src/components/ui/**",
+      // Gradle build outputs for the Android app. They are gitignored, but a
+      // local build leaves generated JS behind that ESLint would otherwise
+      // report on.
+      "android/**/build/**",
     ],
   },
 
