@@ -218,6 +218,46 @@ Oberfläche verlangt deshalb eine ausdrückliche Bestätigung.
 5. KI-Analyse für Ursachen und Reparaturvorschläge anstoßen
 6. Bericht als CSV exportieren
 
+## 🧠 Diagnostischer Core (`server/core/`)
+
+Adapterunabhängige Schicht für Verlaufsdiagnose. Sie kennt kein OBD und kein
+EDIABAS, sondern nur das Vehicle State Model — ein EDIABAS-Adapter tritt später
+neben den vorhandenen ELM327-Adapter, ohne dass sich hier etwas ändert.
+
+| Modul | Aufgabe |
+|---|---|
+| `vehicleState.ts` | Einheitliche Messwert-Struktur, Betriebszustands-Klassifikation, JSONL-Trace-Format |
+| `signalSource.ts` | Adapter-Interface plus Replay-Treiber |
+| `syntheticTrace.ts` | Erzeugt Verläufe mit **bekanntem** Defektbeginn |
+| `baseline.ts` | Konditionierte Baseline je Fahrzeug, Anomalie- und Trenderkennung |
+| `hypothesis.ts` | Hypothesen mit Argumenten dafür/dagegen, Next Best Measurement |
+
+Drei Entwurfsentscheidungen, die den Rest erklären:
+
+- **Vergleich gegen das eigene Fahrzeug, nicht gegen den Katalog.** Werkstoleranzen
+  sind breit genug, dass ein Bauteil weit degradieren kann, während jeder Wert
+  „in spec" bleibt. Das Signal steckt in der Abweichung von der eigenen Historie.
+- **Zeitversatz ist Teil der Daten.** Jeder Messwert trägt seinen echten
+  Erfassungszeitpunkt. `isCorrelatable()` verweigert den Vergleich von Signalen,
+  die mehr als 100 ms auseinanderliegen — bei 3000 min⁻¹ beschreiben sie sonst
+  zwei verschiedene Betriebspunkte statt eines Fehlers.
+- **Wahrscheinlichkeiten sind deterministisch.** Sie stammen aus deklarierten
+  Likelihood-Ratios, nicht aus einem Sprachmodell. Ein LLM erklärt ein Ergebnis,
+  es berechnet keines — sonst wäre die geforderte Auditierbarkeit nicht gegeben.
+
+Entwicklung und Test laufen vollständig ohne Fahrzeug: `syntheticTrace.ts`
+erzeugt Verläufe, bei denen der Defektbeginn bekannt ist, sodass Treffer und
+Fehlalarme des Detektors **zählbar** sind. An einem echten Auto ist genau dieser
+Zeitpunkt unbekannt — er ist das Gesuchte.
+
+Was die Baseline nicht tut: aus synthetischen oder wiedergegebenen Daten lernen.
+`buildBaseline` weist beides ab, weil eine Baseline eine Aussage über ein
+physisches Fahrzeug ist.
+
+**Vor der ersten Aufnahme mit Fahrzeug:** [docs/recording-checklist.md](docs/recording-checklist.md).
+Mehrere Punkte darin lassen sich nachträglich nicht korrigieren — etwa ein
+fehlender Kaltstart oder getrennt gelesene VANOS-Soll/Ist-Werte.
+
 ## 🧪 Entwicklung
 
 ```bash
