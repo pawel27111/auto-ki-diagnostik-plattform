@@ -105,9 +105,28 @@ in Firmware erledigt, macht bei diesem Kabel die App:
   sind dort mit Testfällen abgedeckt, die von Hand aus der Norm gerechnet
   sind — die zeitkritische Hälfte lässt sich ohne Fahrzeug nicht prüfen.
 
+Vier Einstellungen entscheiden darüber, ob das trägt; alle vier stammen aus
+[EdiabasLib](https://github.com/uholeschak/ediabaslib), der Referenz für
+diese Kabel, und ohne sie kam am Fahrzeug keine Verbindung zustande:
+
+- **DTR und RTS bleiben low.** Bei einem nackten Kabel hängen diese Pins am
+  K-Line-Treiber; auf High gehalten erreicht der Anschlag das Steuergerät
+  nicht.
+- **Latenz-Timer des FTDI auf 1 ms.** Ab Werk hält der Chip empfangene
+  Bytes 16 ms zurück — ein Sechstel des Fensters, das die Norm dem
+  Steuergerät zum Antworten lässt.
+- **Bit-Zeiten werden ausgewartet, nicht verschlafen.** 180 ms schlafen,
+  die letzten 20 ms aktiv abwarten: `Thread.sleep` kehrt unter Android bis
+  zu zehn Millisekunden zu spät zurück, und das summiert sich über zehn
+  Bits.
+- **Das eigene Echo wird übersprungen.** Die K-Line ist eine einzelne Ader,
+  also kommt der Anschlag zurück, und das Bit-Banging erzeugt im Empfänger
+  Rahmenfehler, die der FTDI als `00` meldet. Wer das erste Byte nach dem
+  Anschlag für die Antwort des Steuergeräts hält, hört sich selbst zu.
+
 Jeder Schritt protokolliert unter dem Tag `AutoKI-KLine` mit den rohen
-Bytes. Wenn der Anschlag am Auto scheitert, steht in `adb logcat` genau,
-wie weit er gekommen ist:
+Bytes. Wenn der Anschlag scheitert, steht in `adb logcat` genau, wie weit
+er gekommen ist:
 
 ```bash
 adb logcat -s AutoKI-KLine
@@ -115,13 +134,19 @@ adb logcat -s AutoKI-KLine
 
 ## Bekannte Einschränkungen
 
-- Der K-Line-Pfad ist **nicht am Fahrzeug erprobt**. Die Rahmen- und
-  Prüfsummenlogik ist getestet, das Timing des 5-Baud-Anschlags
-  grundsätzlich nicht — Android ist kein Echtzeitsystem und der
-  USB-Chip puffert. Ob es trägt, zeigt sich erst an einem Auto.
+- Vom K-Line-Pfad sind am Fahrzeug bisher Anschlag, Handschlag und das
+  Lesen von Messwerten (Modus 01) bestätigt. Fehlerspeicher lesen und
+  löschen (Modus 03/04) laufen über dieselbe Rahmenlogik, sind aber noch
+  nicht an einem Auto durchlaufen.
+- Erprobt ist genau eine Kombination: Samsung-Tablet, BMW-K+DCAN-Kabel,
+  BMW E46 (2002). Das Timing des 5-Baud-Anschlags hängt am Scheduler des
+  Geräts und an der Pufferung des USB-Chips, also ist damit nicht gesagt,
+  dass jedes Tablet und jedes Kabel es schaffen.
 - Der K-Line-Pfad spricht OBD-II (Modus 01/03/04). BMW-eigene Protokolle
   wie DS2, mit denen INPA auch ABS oder Airbag ausliest, sind nicht
   implementiert.
+- Der Bluetooth-Pfad zu einem ELM327 ist nach wie vor nur kompiliert, nicht
+  an Hardware erprobt.
 - Das App-Icon ist ein einfaches Platzhalter-Vektordesign.
 - Es gibt noch keine automatisierten Instrumentation-/Compose-UI-Tests —
   die fachliche Logik (Protokoll-Dekodierung) ist über `:core:test`
