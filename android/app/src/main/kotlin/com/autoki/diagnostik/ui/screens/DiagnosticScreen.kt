@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -40,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -156,15 +158,12 @@ private fun SetupContent(state: DiagnosticUiState.Setup, viewModel: DiagnosticVi
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilterChip(
                             selected = state.connection == ObdConnection.BLUETOOTH,
-                            onClick = { viewModel.updateSetup { it.copy(connection = ObdConnection.BLUETOOTH) } },
+                            onClick = { viewModel.selectConnection(ObdConnection.BLUETOOTH) },
                             label = { Text("Bluetooth") },
                         )
                         FilterChip(
                             selected = state.connection == ObdConnection.USB,
-                            onClick = {
-                                viewModel.updateSetup { it.copy(connection = ObdConnection.USB) }
-                                viewModel.refreshUsbDevices()
-                            },
+                            onClick = { viewModel.selectConnection(ObdConnection.USB) },
                             label = { Text("USB") },
                         )
                     }
@@ -187,14 +186,20 @@ private fun SetupContent(state: DiagnosticUiState.Setup, viewModel: DiagnosticVi
                                 )
                             } else {
                                 state.pairedDevices.forEach { device ->
+                                    val chosen = state.selectedDevice?.address == device.address
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.fillMaxWidth(),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .selectable(
+                                                selected = chosen,
+                                                role = Role.RadioButton,
+                                                onClick = { viewModel.updateSetup { it.copy(selectedDevice = device) } },
+                                            ),
                                     ) {
-                                        RadioButton(
-                                            selected = state.selectedDevice?.address == device.address,
-                                            onClick = { viewModel.updateSetup { it.copy(selectedDevice = device) } },
-                                        )
+                                        // The radio itself is not clickable: the whole row is,
+                                        // so the label counts as part of the target.
+                                        RadioButton(selected = chosen, onClick = null)
                                         Column {
                                             Text(device.name)
                                             Text(device.address, style = MaterialTheme.typography.bodySmall)
@@ -221,14 +226,18 @@ private fun SetupContent(state: DiagnosticUiState.Setup, viewModel: DiagnosticVi
                                 )
                             } else {
                                 state.usbDevices.forEach { device ->
+                                    val chosen = state.selectedUsbDevice?.deviceId == device.deviceId
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.fillMaxWidth(),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .selectable(
+                                                selected = chosen,
+                                                role = Role.RadioButton,
+                                                onClick = { viewModel.updateSetup { it.copy(selectedUsbDevice = device) } },
+                                            ),
                                     ) {
-                                        RadioButton(
-                                            selected = state.selectedUsbDevice?.deviceId == device.deviceId,
-                                            onClick = { viewModel.updateSetup { it.copy(selectedUsbDevice = device) } },
-                                        )
+                                        RadioButton(selected = chosen, onClick = null)
                                         Column {
                                             Text(device.name)
                                             Text(device.hardwareId, style = MaterialTheme.typography.bodySmall)
@@ -244,15 +253,19 @@ private fun SetupContent(state: DiagnosticUiState.Setup, viewModel: DiagnosticVi
                         // A bare K-Line cable needs the serial line driven directly,
                         // which Bluetooth cannot do — so it is only offered on USB.
                         val usable = !type.requiresLineControl || state.connection == ObdConnection.USB
+                        val chosen = state.adapterType == type
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .selectable(
+                                    selected = chosen,
+                                    enabled = usable,
+                                    role = Role.RadioButton,
+                                    onClick = { viewModel.selectAdapterType(type) },
+                                ),
                         ) {
-                            RadioButton(
-                                selected = state.adapterType == type,
-                                enabled = usable,
-                                onClick = { viewModel.updateSetup { it.copy(adapterType = type) } },
-                            )
+                            RadioButton(selected = chosen, enabled = usable, onClick = null)
                             Column {
                                 Text(type.label)
                                 if (!usable) {
@@ -267,6 +280,18 @@ private fun SetupContent(state: DiagnosticUiState.Setup, viewModel: DiagnosticVi
                     }
                 }
             }
+        }
+
+        // What is about to be used, spelled out. The adapter type sits below the
+        // device list and is easy to leave on the wrong value, which produces a
+        // failure several steps later that looks like a hardware problem.
+        if (!state.useSimulation) {
+            val plug = if (state.connection == ObdConnection.USB) "USB" else "Bluetooth"
+            Text(
+                "Verbindet über $plug als: ${state.adapterType.label}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary,
+            )
         }
 
         state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }

@@ -21,6 +21,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /** Diagnostic types the backend accepts (server/obdRouter.ts's `diagnosticType` enum). */
@@ -86,11 +87,31 @@ class DiagnosticViewModel(
 
     init {
         viewModelScope.launch {
+            // The adapter choice is restored before anything else: starting a
+            // session against the wrong adapter type is the failure that costs
+            // the most time to recognise, and defaulting to it on every visit
+            // made that the normal case.
+            val settings = runCatching { container.settingsStore.settings.first() }.getOrNull()
             val vehicle = runCatching { container.apiService.getVehicle(vehicleId) }.getOrNull()
-            (_uiState.value as? DiagnosticUiState.Setup)?.let {
-                _uiState.value = it.copy(vehicle = vehicle)
+            (_uiState.value as? DiagnosticUiState.Setup)?.let { setup ->
+                _uiState.value = setup.copy(
+                    vehicle = vehicle,
+                    connection = settings?.obdConnection ?: setup.connection,
+                    adapterType = settings?.obdAdapterType ?: setup.adapterType,
+                )
             }
         }
+    }
+
+    fun selectConnection(connection: ObdConnection) {
+        updateSetup { it.copy(connection = connection) }
+        viewModelScope.launch { container.settingsStore.setObdConnection(connection) }
+        if (connection == ObdConnection.USB) refreshUsbDevices()
+    }
+
+    fun selectAdapterType(adapterType: ObdAdapterType) {
+        updateSetup { it.copy(adapterType = adapterType) }
+        viewModelScope.launch { container.settingsStore.setObdAdapterType(adapterType) }
     }
 
     fun loadPairedDevices(devices: List<PairedDevice>) {
