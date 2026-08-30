@@ -46,7 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.autoki.diagnostik.data.network.formatTimestamp
 import com.autoki.diagnostik.data.obd.BluetoothDevices
-import com.autoki.diagnostik.data.obd.ObdDeviceType
+import com.autoki.diagnostik.data.obd.ObdAdapterType
+import com.autoki.diagnostik.data.obd.ObdConnection
 import com.autoki.diagnostik.data.report.ReportCsv
 import com.autoki.diagnostik.ui.autoKiViewModel
 import com.autoki.diagnostik.ui.components.ParameterCard
@@ -108,6 +109,12 @@ private fun SetupContent(state: DiagnosticUiState.Setup, viewModel: DiagnosticVi
         }
     }
 
+    // USB needs no permission to enumerate — only to open — so the list can be
+    // filled as soon as hardware mode is chosen.
+    LaunchedEffect(state.useSimulation) {
+        if (!state.useSimulation) viewModel.refreshUsbDevices()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -144,51 +151,119 @@ private fun SetupContent(state: DiagnosticUiState.Setup, viewModel: DiagnosticVi
         if (!state.useSimulation) {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("OBD-Adapter (Bluetooth)", style = MaterialTheme.typography.labelLarge)
-                    if (!hasPermission) {
-                        Text("Bluetooth-Berechtigung erforderlich, um gekoppelte Geräte zu sehen.")
-                        Button(onClick = {
-                            BluetoothDevices.connectPermission()?.let { permissionLauncher.launch(it) }
-                                ?: run { hasPermission = true }
-                        }) {
-                            Text("Berechtigung erteilen")
-                        }
-                    } else if (state.pairedDevices.isEmpty()) {
-                        Text(
-                            "Kein gekoppeltes Gerät gefunden. Adapter zuerst in den " +
-                                "Bluetooth-Einstellungen des Telefons koppeln (PIN meist 1234 oder 0000).",
+
+                    Text("Anschluss", style = MaterialTheme.typography.labelLarge)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(
+                            selected = state.connection == ObdConnection.BLUETOOTH,
+                            onClick = { viewModel.updateSetup { it.copy(connection = ObdConnection.BLUETOOTH) } },
+                            label = { Text("Bluetooth") },
                         )
-                    } else {
-                        state.pairedDevices.forEach { device ->
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                RadioButton(
-                                    selected = state.selectedDevice?.address == device.address,
-                                    onClick = { viewModel.updateSetup { it.copy(selectedDevice = device) } },
+                        FilterChip(
+                            selected = state.connection == ObdConnection.USB,
+                            onClick = {
+                                viewModel.updateSetup { it.copy(connection = ObdConnection.USB) }
+                                viewModel.refreshUsbDevices()
+                            },
+                            label = { Text("USB") },
+                        )
+                    }
+
+                    when (state.connection) {
+                        ObdConnection.BLUETOOTH -> {
+                            Text("Gekoppelte Geräte", style = MaterialTheme.typography.labelLarge)
+                            if (!hasPermission) {
+                                Text("Bluetooth-Berechtigung erforderlich, um gekoppelte Geräte zu sehen.")
+                                Button(onClick = {
+                                    BluetoothDevices.connectPermission()?.let { permissionLauncher.launch(it) }
+                                        ?: run { hasPermission = true }
+                                }) {
+                                    Text("Berechtigung erteilen")
+                                }
+                            } else if (state.pairedDevices.isEmpty()) {
+                                Text(
+                                    "Kein gekoppeltes Gerät gefunden. Adapter zuerst in den " +
+                                        "Bluetooth-Einstellungen des Geräts koppeln (PIN meist 1234 oder 0000).",
                                 )
-                                Column {
-                                    Text(device.name)
-                                    Text(device.address, style = MaterialTheme.typography.bodySmall)
+                            } else {
+                                state.pairedDevices.forEach { device ->
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        RadioButton(
+                                            selected = state.selectedDevice?.address == device.address,
+                                            onClick = { viewModel.updateSetup { it.copy(selectedDevice = device) } },
+                                        )
+                                        Column {
+                                            Text(device.name)
+                                            Text(device.address, style = MaterialTheme.typography.bodySmall)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        ObdConnection.USB -> {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text("Angeschlossene Kabel", style = MaterialTheme.typography.labelLarge)
+                                OutlinedButton(onClick = viewModel::refreshUsbDevices) { Text("Neu suchen") }
+                            }
+                            if (state.usbDevices.isEmpty()) {
+                                Text(
+                                    "Kein USB-Adapter erkannt. Kabel über einen OTG-Adapter anschließen " +
+                                        "und auf \u201eNeu suchen\u201c tippen. Android fragt beim Verbinden " +
+                                        "einmal nach der Erlaubnis für das Gerät.",
+                                )
+                            } else {
+                                state.usbDevices.forEach { device ->
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        RadioButton(
+                                            selected = state.selectedUsbDevice?.deviceId == device.deviceId,
+                                            onClick = { viewModel.updateSetup { it.copy(selectedUsbDevice = device) } },
+                                        )
+                                        Column {
+                                            Text(device.name)
+                                            Text(device.hardwareId, style = MaterialTheme.typography.bodySmall)
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Text("D-CAN-Adapter (BMW/Mercedes/Audi)")
-                        Switch(
-                            checked = state.deviceType == ObdDeviceType.DCAN,
-                            onCheckedChange = { checked ->
-                                viewModel.updateSetup {
-                                    it.copy(deviceType = if (checked) ObdDeviceType.DCAN else ObdDeviceType.ELM327)
+                    Text("Art des Adapters", style = MaterialTheme.typography.labelLarge)
+                    ObdAdapterType.entries.forEach { type ->
+                        // A bare K-Line cable needs the serial line driven directly,
+                        // which Bluetooth cannot do — so it is only offered on USB.
+                        val usable = !type.requiresLineControl || state.connection == ObdConnection.USB
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            RadioButton(
+                                selected = state.adapterType == type,
+                                enabled = usable,
+                                onClick = { viewModel.updateSetup { it.copy(adapterType = type) } },
+                            )
+                            Column {
+                                Text(type.label)
+                                if (!usable) {
+                                    Text(
+                                        "nur über USB",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.error,
+                                    )
                                 }
-                            },
-                        )
+                            }
+                        }
                     }
                 }
             }

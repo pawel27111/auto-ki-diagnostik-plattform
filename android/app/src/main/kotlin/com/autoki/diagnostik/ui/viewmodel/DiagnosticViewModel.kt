@@ -9,8 +9,12 @@ import com.autoki.diagnostik.data.network.ErrorCodeDto
 import com.autoki.diagnostik.data.network.LlmAnalysisDto
 import com.autoki.diagnostik.data.network.ObdParameterDto
 import com.autoki.diagnostik.data.network.VehicleDto
-import com.autoki.diagnostik.data.obd.BluetoothObdTransport
-import com.autoki.diagnostik.data.obd.ObdDeviceType
+import com.autoki.diagnostik.data.obd.ObdAdapter
+import com.autoki.diagnostik.data.obd.ObdAdapterType
+import com.autoki.diagnostik.data.obd.ObdConnection
+import com.autoki.diagnostik.data.obd.ObdConnector
+import com.autoki.diagnostik.data.obd.UsbObdDevice
+import com.autoki.diagnostik.data.obd.UsbObdLink
 import com.autoki.diagnostik.data.obd.ObdReading
 import com.autoki.diagnostik.data.obd.PairedDevice
 import kotlinx.coroutines.Job
@@ -31,9 +35,12 @@ sealed interface DiagnosticUiState {
         val vehicle: VehicleDto?,
         val kind: DiagnosticKind = DiagnosticKind.QUICK,
         val useSimulation: Boolean = true,
+        val connection: ObdConnection = ObdConnection.BLUETOOTH,
         val pairedDevices: List<PairedDevice> = emptyList(),
         val selectedDevice: PairedDevice? = null,
-        val deviceType: ObdDeviceType = ObdDeviceType.ELM327,
+        val usbDevices: List<UsbObdDevice> = emptyList(),
+        val selectedUsbDevice: UsbObdDevice? = null,
+        val adapterType: ObdAdapterType = ObdAdapterType.ELM327,
         val starting: Boolean = false,
         val error: String? = null,
     ) : DiagnosticUiState
@@ -74,7 +81,7 @@ class DiagnosticViewModel(
     )
     val uiState: StateFlow<DiagnosticUiState> = _uiState.asStateFlow()
 
-    private var transport: BluetoothObdTransport? = null
+    private var adapter: ObdAdapter? = null
     private var liveJob: Job? = null
 
     init {
@@ -92,15 +99,45 @@ class DiagnosticViewModel(
         }
     }
 
+    /** Re-reads the attached USB adapters; cheap enough to call whenever the screen resumes. */
+    fun refreshUsbDevices() {
+        val devices = UsbObdLink.list(container.appContext)
+        (_uiState.value as? DiagnosticUiState.Setup)?.let { setup ->
+            _uiState.value = setup.copy(
+                usbDevices = devices,
+                // Keep the current pick if it is still plugged in.
+                selectedUsbDevice = devices.firstOrNull { it.deviceId == setup.selectedUsbDevice?.deviceId }
+                    ?: devices.firstOrNull(),
+            )
+        }
+    }
+
     fun updateSetup(transform: (DiagnosticUiState.Setup) -> DiagnosticUiState.Setup) {
         (_uiState.value as? DiagnosticUiState.Setup)?.let { _uiState.value = transform(it) }
     }
 
     fun start() {
         val setup = _uiState.value as? DiagnosticUiState.Setup ?: return
-        if (!setup.useSimulation && setup.selectedDevice == null) {
-            _uiState.value = setup.copy(error = "Bitte ein gekoppeltes OBD-Gerät auswählen")
-            return
+        if (!setup.useSimulation) {
+            val missing = when (setup.connection) {
+                ObdConnection.BLUETOOTH -> setup.selectedDevice == null
+                ObdConnection.USB -> setup.selectedUsbDevice == null
+            }
+            if (missing) {
+                _uiState.value = setup.copy(
+                    error = when (setup.connection) {
+                        ObdConnection.BLUETOOTH -> "Bitte ein gekoppeltes OBD-Gerät auswählen"
+                        ObdConnection.USB -> "Kein USB-Adapter erkannt — Kabel und OTG-Adapter prüfen"
+                    }
+                )
+                return
+            }
+            if (setup.connection == ObdConnection.BLUETOOTH && setup.adapterType.requiresLineControl) {
+                _uiState.value = setup.copy(
+                    error = "Ein K+DCAN-Kabel braucht eine USB-Verbindung"
+                )
+                return
+            }
         }
 
         viewModelScope.launch {
@@ -133,18 +170,41 @@ class DiagnosticViewModel(
     }
 
     private suspend fun connectAndRun(diagnosticId: Int, setup: DiagnosticUiState.Setup) {
-        val device = setup.selectedDevice ?: return
+        val name = when (setup.connection) {
+            ObdConnection.BLUETOOTH -> setup.selectedDevice?.name
+            ObdConnection.USB -> setup.selectedUsbDevice?.name
+        } ?: return
+
         _uiState.value = DiagnosticUiState.Running(
             diagnosticId = diagnosticId,
             vehicle = setup.vehicle,
             simulated = false,
-            statusMessage = "Verbinde mit ${device.name}…",
+            // The K-Line wake-up alone takes two seconds, so say what is happening.
+            statusMessage = if (setup.adapterType.requiresLineControl) {
+                "Verbinde mit $name — Steuergerät wird geweckt, das dauert einige Sekunden…"
+            } else {
+                "Verbinde mit $name…"
+            },
         )
-        runCatching { BluetoothObdTransport.connect(container.appContext, device.device, setup.deviceType) }
+
+        runCatching {
+            when (setup.connection) {
+                ObdConnection.BLUETOOTH -> ObdConnector.connectBluetooth(
+                    container.appContext,
+                    setup.selectedDevice!!.device,
+                    setup.adapterType,
+                )
+                ObdConnection.USB -> ObdConnector.connectUsb(
+                    container.appContext,
+                    setup.selectedUsbDevice!!.deviceId,
+                    setup.adapterType,
+                )
+            }
+        }
             .onSuccess { connected ->
-                transport = connected
+                adapter = connected
                 (_uiState.value as? DiagnosticUiState.Running)?.let {
-                    _uiState.value = it.copy(statusMessage = "Verbunden mit ${device.name}")
+                    _uiState.value = it.copy(statusMessage = "Verbunden mit $name")
                 }
                 startLiveScan(diagnosticId, connected)
             }
@@ -154,9 +214,9 @@ class DiagnosticViewModel(
             }
     }
 
-    private fun startLiveScan(diagnosticId: Int, transport: BluetoothObdTransport) {
+    private fun startLiveScan(diagnosticId: Int, adapter: ObdAdapter) {
         liveJob = viewModelScope.launch {
-            transport.liveReadings().collect { reading ->
+            adapter.liveReadings().collect { reading ->
                 val running = _uiState.value as? DiagnosticUiState.Running ?: return@collect
                 _uiState.value = running.copy(readings = running.readings + (reading.pid to reading))
 
@@ -179,7 +239,7 @@ class DiagnosticViewModel(
 
     fun readErrorCodes() {
         val running = _uiState.value as? DiagnosticUiState.Running ?: return
-        val bt = transport ?: return
+        val bt = adapter ?: return
         viewModelScope.launch {
             _uiState.value = running.copy(readingDtcs = true, error = null)
             runCatching { bt.readErrorCodes() }
@@ -203,7 +263,7 @@ class DiagnosticViewModel(
     /** Mode 04 — erases the fault memory. Callers must have already confirmed with the user. */
     fun clearErrorCodesConfirmed() {
         val running = _uiState.value as? DiagnosticUiState.Running ?: return
-        val bt = transport ?: return
+        val bt = adapter ?: return
         viewModelScope.launch {
             _uiState.value = running.copy(clearing = true, error = null)
             runCatching { bt.clearErrorCodes() }
@@ -229,8 +289,8 @@ class DiagnosticViewModel(
         viewModelScope.launch {
             _uiState.value = running.copy(finishing = true, error = null)
             liveJob?.cancel()
-            transport?.close()
-            transport = null
+            adapter?.close()
+            adapter = null
 
             val latest = running.readings
             runCatching {
@@ -288,6 +348,6 @@ class DiagnosticViewModel(
     override fun onCleared() {
         super.onCleared()
         liveJob?.cancel()
-        transport?.close()
+        adapter?.close()
     }
 }
