@@ -251,7 +251,7 @@ private fun RunningContent(state: DiagnosticUiState.Running, viewModel: Diagnost
             // catalogue anyway, so there is nothing to virtualise.
             items(
                 state.readings.values.sortedBy { it.pid }.chunked(2),
-                key = { row -> row.first().pid },
+                key = { row -> "reading-${row.first().pid}" },
             ) { row ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -288,7 +288,7 @@ private fun RunningContent(state: DiagnosticUiState.Running, viewModel: Diagnost
             }
         }
 
-        items(state.dtcs, key = { it.id }) { dtc ->
+        items(state.dtcs, key = { "dtc-${it.id}" }) { dtc ->
             Card(Modifier.fillMaxWidth()) {
                 Row(
                     Modifier.fillMaxWidth().padding(12.dp),
@@ -345,7 +345,9 @@ private fun FinishedContent(
         }
 
         item { Text("Messwerte", style = MaterialTheme.typography.labelLarge) }
-        items(state.parameters, key = { it.id }) { parameter ->
+        // Same reason as the dashboard: parameters and error codes are separate
+        // tables, both numbered from 1, and they share this LazyColumn.
+        items(state.parameters, key = { "parameter-${it.id}" }) { parameter ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("${parameter.parameterName} (${parameter.parameterId})")
                 Text("${formatValue(parameter.value)} ${parameter.unit ?: ""}")
@@ -356,7 +358,7 @@ private fun FinishedContent(
         if (state.errorCodes.isEmpty()) {
             item { Text("Keine Fehlercodes gefunden.") }
         }
-        items(state.errorCodes, key = { it.id }) { code ->
+        items(state.errorCodes, key = { "errorCode-${it.id}" }) { code ->
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(12.dp)) {
                     Row(

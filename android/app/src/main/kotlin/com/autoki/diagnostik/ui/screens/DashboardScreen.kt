@@ -118,7 +118,11 @@ private fun DashboardContent(
                 )
             }
         }
-        items(vehicles, key = { it.id }) { vehicle ->
+        // Keys are namespaced per section: vehicle 1 and diagnostic 1 both live
+        // in this one LazyColumn, and a bare `it.id` made them collide — Compose
+        // rejects a duplicate key with "Key \"1\" was already used" and the app
+        // died on the first dashboard that had a vehicle and a diagnostic.
+        items(vehicles, key = { "vehicle-${it.id}" }) { vehicle ->
             VehicleCard(vehicle = vehicle, onClick = { onOpenVehicle(vehicle) })
         }
 
@@ -132,7 +136,7 @@ private fun DashboardContent(
         if (recent.isEmpty()) {
             item { Text("Noch keine Diagnosen durchgeführt.", style = MaterialTheme.typography.bodyMedium) }
         }
-        items(recent, key = { it.id }) { diagnostic ->
+        items(recent, key = { "diagnostic-${it.id}" }) { diagnostic ->
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(12.dp)) {
                     Row(
