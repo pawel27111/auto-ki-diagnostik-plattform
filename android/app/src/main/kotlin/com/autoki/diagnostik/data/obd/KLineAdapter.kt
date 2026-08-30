@@ -62,10 +62,32 @@ class KLineAdapter(
 
         sendSlowInitAddress()
 
-        val sync = readByte(W1_MAX_MS)
-            ?: throw ObdTransportException(
-                "Keine Antwort auf den 5-Baud-Anschlag. Zündung an? Kabel richtig in der OBD-Buchse?"
+        // Everything the bit-banging produced in the receiver is discarded here.
+        // Driving the line by hand at five baud looks to the UART like a start
+        // bit followed by two thousand bit-times of nothing, which it reports as
+        // a framing error — one 0x00 per level. The ECU's answer is still 60 ms
+        // away at the earliest (ISO 9141-2, W1), so clearing now cannot eat it.
+        pending.clear()
+        link.flushInput()
+
+        val skipped = mutableListOf<Int>()
+        val sync = readSyncByte(W1_MAX_MS, skipped)
+        if (skipped.isNotEmpty()) {
+            Log.i(LOG_TAG, "Vor dem Sync verworfen: ${skipped.hexList()}")
+        }
+
+        if (sync == null) {
+            throw ObdTransportException(
+                if (skipped.isEmpty()) {
+                    "Keine Antwort auf den 5-Baud-Anschlag. Zündung an? Kabel richtig in der OBD-Buchse?"
+                } else {
+                    // Something was on the line, just never the sync byte. Naming
+                    // the bytes is the difference between a guess and a lead.
+                    "Anschlag ohne Sync-Byte: gelesen wurden ${skipped.hexList()}, erwartet 55"
+                }
             )
+        }
+
         val keyByte1 = readByte(W2_MAX_MS)
             ?: throw ObdTransportException("Steuergerät hat den Anschlag begonnen, aber nicht beendet (kein Schlüsselbyte 1)")
         val keyByte2 = readByte(W3_MAX_MS)
@@ -75,7 +97,7 @@ class KLineAdapter(
 
         val answer = KLine.keyByteHandshake(sync, keyByte2)
             ?: throw ObdTransportException(
-                "Unerwartete Antwort auf den Anschlag (%02X statt 55) — dieses Fahrzeug spricht vermutlich kein K-Line".format(sync)
+                "Unerwartete Antwort auf den Anschlag (%02X statt 55)".format(sync)
             )
 
         framing = framingFor(keyByte1, keyByte2)
@@ -186,6 +208,34 @@ class KLineAdapter(
         return collected.toByteArray()
     }
 
+    /**
+     * Waits for the sync byte, stepping over what our own wake-up left behind.
+     *
+     * The bus is a single wire, so the address we drove onto it comes straight
+     * back, and the bit-banging shows up as framing errors. Neither is the
+     * ECU talking. Everything discarded is collected in [skipped] so a failure
+     * can say what was actually on the line instead of naming one byte.
+     */
+    private fun readSyncByte(timeoutMs: Long, skipped: MutableList<Int>): Int? {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        while (System.currentTimeMillis() < deadline) {
+            val byte = readByte(deadline - System.currentTimeMillis()) ?: return null
+            when (byte) {
+                KLine.SYNC_BYTE -> return byte
+                // 0x00: framing error from our own break toggling.
+                // 0x33: the address itself, echoed by the single-wire bus.
+                0x00, KLine.INIT_ADDRESS -> skipped += byte
+                else -> {
+                    // Anything else is the ECU saying something unexpected, and
+                    // that is worth surfacing rather than swallowing.
+                    skipped += byte
+                    return byte
+                }
+            }
+        }
+        return null
+    }
+
     /** Reads a single byte, or null when none arrives within [timeoutMs]. */
     private fun readByte(timeoutMs: Long): Int? {
         if (pending.isNotEmpty()) return pending.removeFirst().toInt() and 0xFF
@@ -246,7 +296,10 @@ class KLineAdapter(
         const val BIT_DURATION_NANOS = 200_000_000L
 
         const val BUS_IDLE_MS = 350L // W5
-        const val W1_MAX_MS = 400L // sync byte after the address
+        // ISO 9141-2 allows 60-300 ms for the sync byte. The window is wider
+        // here because the bytes our own wake-up generates have to be read and
+        // discarded first, and an FTDI bridge delivers in latency-timer chunks.
+        const val W1_MAX_MS = 800L
         const val W2_MAX_MS = 100L // key byte 1
         const val W3_MAX_MS = 100L // key byte 2
         const val W4_MS = 30L // pause before our answer
@@ -266,3 +319,5 @@ class KLineAdapter(
 }
 
 private fun ByteArray.toHex(): String = joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
+
+private fun List<Int>.hexList(): String = joinToString(" ") { "%02X".format(it and 0xFF) }
