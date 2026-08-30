@@ -9,6 +9,7 @@ import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.os.Build
 import androidx.core.content.ContextCompat
+import com.hoho.android.usbserial.driver.FtdiSerialDriver
 import com.hoho.android.usbserial.driver.UsbSerialPort
 import com.hoho.android.usbserial.driver.UsbSerialProber
 import kotlinx.coroutines.Dispatchers
@@ -73,8 +74,10 @@ class UsbObdLink private constructor(
     }
 
     override fun flushInput() {
-        val scratch = ByteArray(256)
-        // A zero timeout returns immediately once the buffer is empty.
+        // Drops what the bridge is still holding as well as what has already
+        // been handed over; reading alone leaves the hardware buffer full.
+        runCatching { port.purgeHwBuffers(true, false) }
+        val scratch = ByteArray(MIN_READ_BUFFER)
         while (runCatching { port.read(scratch, 1) }.getOrDefault(0) > 0) {
             // discard
         }
@@ -111,6 +114,8 @@ class UsbObdLink private constructor(
 
         /** Two FTDI status bytes plus room for at least one data byte. */
         private const val MIN_READ_BUFFER = 64
+
+        private const val FTDI_LATENCY_MS = 1
         private const val PERMISSION_ACTION = "com.autoki.diagnostik.USB_PERMISSION"
 
         /** Every attached device the bundled drivers recognise. */
@@ -135,7 +140,18 @@ class UsbObdLink private constructor(
          * default for this device" the grant is already in place and no dialogue
          * appears.
          */
-        suspend fun open(context: Context, deviceId: Int, baudRate: Int = DEFAULT_BAUD_RATE): UsbObdLink {
+        suspend fun open(
+            context: Context,
+            deviceId: Int,
+            baudRate: Int = DEFAULT_BAUD_RATE,
+            /**
+             * Asserted for an ELM327, which several clones need to come alive.
+             * Left low for a bare K-Line cable: on those the handshake lines
+             * are wired into the transceiver, and EdiabasLib — the reference
+             * implementation for these cables — holds both low throughout.
+             */
+            handshakeLines: Boolean = true,
+        ): UsbObdLink {
             val appContext = context.applicationContext
             val manager = appContext.getSystemService(Context.USB_SERVICE) as? UsbManager
                 ?: throw ObdTransportException("Dieses Gerät bietet keinen USB-Host-Zugriff")
@@ -165,9 +181,16 @@ class UsbObdLink private constructor(
                         UsbSerialPort.STOPBITS_1,
                         UsbSerialPort.PARITY_NONE,
                     )
-                    // DTR/RTS asserted: several ELM327 clones stay mute otherwise.
-                    runCatching { port.dtr = true }
-                    runCatching { port.rts = true }
+                    runCatching { port.dtr = handshakeLines }
+                    runCatching { port.rts = handshakeLines }
+
+                    // An FTDI bridge holds received bytes back until its latency
+                    // timer expires — 16 ms by default, which is most of the
+                    // window K-Line allows for a reply. At 1 ms the bytes arrive
+                    // when they arrive.
+                    if (port is FtdiSerialDriver.FtdiSerialPort) {
+                        runCatching { port.latencyTimer = FTDI_LATENCY_MS }
+                    }
                 } catch (error: IOException) {
                     runCatching { port.close() }
                     throw ObdTransportException("$name ließ sich nicht öffnen: ${error.message}")

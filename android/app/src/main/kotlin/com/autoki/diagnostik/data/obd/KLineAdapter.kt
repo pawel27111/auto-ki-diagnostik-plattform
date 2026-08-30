@@ -52,7 +52,26 @@ class KLineAdapter(
     }
 
     override suspend fun initialize() = withContext(Dispatchers.IO) {
-        link.setBaudRate(UsbObdLink.K_LINE_BAUD_RATE)
+        // 10400 is what ISO 9141-2 prescribes for the emissions interface, but
+        // BMW's own K-Line modules of this era answer at 9600. One wake-up
+        // costs two seconds, so trying the standard first and the older rate
+        // second is worth it rather than guessing.
+        val failures = mutableListOf<String>()
+        for (baudRate in listOf(UsbObdLink.K_LINE_BAUD_RATE, LEGACY_BAUD_RATE)) {
+            try {
+                wakeUp(baudRate)
+                Log.i(LOG_TAG, "Verbindung steht bei $baudRate Baud")
+                return@withContext
+            } catch (error: ObdTransportException) {
+                Log.w(LOG_TAG, "Anschlag bei $baudRate Baud gescheitert: ${error.message}")
+                failures += "$baudRate Baud: ${error.message}"
+            }
+        }
+        throw ObdTransportException(failures.joinToString(" — "))
+    }
+
+    private fun wakeUp(baudRate: Int) {
+        link.setBaudRate(baudRate)
         link.setBreak(false)
         pending.clear()
         link.flushInput()
@@ -113,6 +132,7 @@ class KLineAdapter(
         }
 
         lastExchangeAt = System.currentTimeMillis()
+        pending.clear()
         link.flushInput()
     }
 
@@ -136,10 +156,22 @@ class KLineAdapter(
         link.setBreak(false)
     }
 
+    /**
+     * Sleeps most of the way, then spins out the rest.
+     *
+     * Thread.sleep on Android returns when the scheduler gets round to it,
+     * which can be ten milliseconds late — five percent of a bit at this rate,
+     * accumulating across ten of them. EdiabasLib solves it the same way:
+     * sleep short, busy-wait the remainder.
+     */
     private fun sleepUntil(deadlineNanos: Long) {
-        val remaining = deadlineNanos - System.nanoTime()
-        if (remaining <= 0) return
-        Thread.sleep(remaining / 1_000_000, (remaining % 1_000_000).toInt())
+        val coarse = deadlineNanos - SPIN_MARGIN_NANOS - System.nanoTime()
+        if (coarse > 0) {
+            Thread.sleep(coarse / 1_000_000, (coarse % 1_000_000).toInt())
+        }
+        while (System.nanoTime() < deadlineNanos) {
+            // The last milliseconds, held precisely.
+        }
     }
 
     /**
@@ -315,6 +347,12 @@ class KLineAdapter(
          * read may be issued with fewer than three bytes of room.
          */
         const val READ_BUFFER_SIZE = 256
+
+        /** BMW's own K-Line modules of this era run at 9600 rather than 10400. */
+        const val LEGACY_BAUD_RATE = 9600
+
+        /** How much of each bit is held by spinning rather than sleeping. */
+        const val SPIN_MARGIN_NANOS = 20_000_000L
     }
 }
 

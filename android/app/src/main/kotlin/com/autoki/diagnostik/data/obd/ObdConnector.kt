@@ -63,7 +63,12 @@ object ObdConnector {
         val baudRate =
             if (adapterType.requiresLineControl) UsbObdLink.K_LINE_BAUD_RATE
             else UsbObdLink.DEFAULT_BAUD_RATE
-        val link = UsbObdLink.open(context, deviceId, baudRate)
+        val link = UsbObdLink.open(
+            context,
+            deviceId,
+            baudRate,
+            handshakeLines = !adapterType.requiresLineControl,
+        )
         return finish(link, adapterType)
     }
 
