@@ -20,10 +20,16 @@ import kotlinx.coroutines.withTimeout
  * command sent before the first is answered would corrupt both — and the same
  * ">" prompt framing.
  */
+/** No answer to the very first command, i.e. this is probably not an ELM327. */
+class ElmUnresponsiveException(message: String) : ObdTransportException(message)
+
 class Elm327Adapter(
     link: ObdLink,
     private val countByte: CountByteMode,
 ) : ObdAdapter(link) {
+
+    override val type: ObdAdapterType
+        get() = if (countByte == CountByteMode.PRESENT) ObdAdapterType.ELM327_CAN else ObdAdapterType.ELM327
 
     private val commandLock = Mutex()
 
@@ -45,7 +51,7 @@ class Elm327Adapter(
                 // ELM327 at all — a bare K+DCAN cable has no idea what ATZ is —
                 // and "timeout" alone sends people looking at the wrong things.
                 if (command == "ATZ") {
-                    throw ObdTransportException(
+                    throw ElmUnresponsiveException(
                         "Der Adapter antwortet nicht auf ELM327-Befehle. Falls es ein " +
                             "K+DCAN-Kabel ist: unter \u201eArt des Adapters\u201c " +
                             "K-Line auswählen. Sonst Zündung und Steckverbindung prüfen."

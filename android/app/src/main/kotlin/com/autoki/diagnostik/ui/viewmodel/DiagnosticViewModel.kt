@@ -86,20 +86,23 @@ class DiagnosticViewModel(
     private var liveJob: Job? = null
 
     init {
+        // Two independent loads, each writing only its own fields.
+        //
+        // They used to share one coroutine, which meant the stored adapter
+        // choice was applied only after the vehicle request came back over the
+        // network — and a tap that landed in between was overwritten by the
+        // value read before it. The user picked K-Line, the request finished,
+        // and the session started as ELM327 anyway.
         viewModelScope.launch {
-            // The adapter choice is restored before anything else: starting a
-            // session against the wrong adapter type is the failure that costs
-            // the most time to recognise, and defaulting to it on every visit
-            // made that the normal case.
-            val settings = runCatching { container.settingsStore.settings.first() }.getOrNull()
-            val vehicle = runCatching { container.apiService.getVehicle(vehicleId) }.getOrNull()
-            (_uiState.value as? DiagnosticUiState.Setup)?.let { setup ->
-                _uiState.value = setup.copy(
-                    vehicle = vehicle,
-                    connection = settings?.obdConnection ?: setup.connection,
-                    adapterType = settings?.obdAdapterType ?: setup.adapterType,
-                )
+            val settings = runCatching { container.settingsStore.settings.first() }.getOrNull() ?: return@launch
+            updateSetup {
+                it.copy(connection = settings.obdConnection, adapterType = settings.obdAdapterType)
             }
+        }
+
+        viewModelScope.launch {
+            val vehicle = runCatching { container.apiService.getVehicle(vehicleId) }.getOrNull()
+            updateSetup { it.copy(vehicle = vehicle) }
         }
     }
 
@@ -224,8 +227,19 @@ class DiagnosticViewModel(
         }
             .onSuccess { connected ->
                 adapter = connected
+                // The connector may have fallen back to another adapter type;
+                // keep that so the next session starts with what works.
+                if (connected.type != setup.adapterType) {
+                    container.settingsStore.setObdAdapterType(connected.type)
+                }
                 (_uiState.value as? DiagnosticUiState.Running)?.let {
-                    _uiState.value = it.copy(statusMessage = "Verbunden mit $name")
+                    _uiState.value = it.copy(
+                        statusMessage = if (connected.type != setup.adapterType) {
+                            "Verbunden mit $name als ${connected.type.label}"
+                        } else {
+                            "Verbunden mit $name"
+                        },
+                    )
                 }
                 startLiveScan(diagnosticId, connected)
             }

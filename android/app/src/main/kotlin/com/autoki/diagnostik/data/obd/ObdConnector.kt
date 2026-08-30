@@ -28,7 +28,34 @@ object ObdConnector {
         return finish(link, adapterType)
     }
 
+    /**
+     * Opens a USB adapter, falling back to K-Line when an ELM327 stays silent.
+     *
+     * The two kinds are indistinguishable before you talk to them — a bare
+     * K+DCAN cable and an ELM327-on-USB are both FTDI bridges reporting the
+     * same identifiers — so the wrong pick cannot be caught by inspection, only
+     * by trying. Picking wrongly used to end the session with a message about
+     * the vehicle, which is the least useful place to learn about a setting.
+     *
+     * The fallback runs only in that direction: an ELM327 that does not answer
+     * might be a bare cable, while a failed wake-up on a cable the user
+     * explicitly chose is a real fault worth reporting rather than papering
+     * over with a second attempt.
+     */
     suspend fun connectUsb(
+        context: Context,
+        deviceId: Int,
+        adapterType: ObdAdapterType,
+    ): ObdAdapter {
+        try {
+            return openUsb(context, deviceId, adapterType)
+        } catch (silent: ElmUnresponsiveException) {
+            if (adapterType.requiresLineControl) throw silent
+        }
+        return openUsb(context, deviceId, ObdAdapterType.KLINE)
+    }
+
+    private suspend fun openUsb(
         context: Context,
         deviceId: Int,
         adapterType: ObdAdapterType,
@@ -50,6 +77,8 @@ object ObdConnector {
         try {
             adapter.initialize()
         } catch (error: Throwable) {
+            // Closes the link too — the fallback re-opens the same device and
+            // Android hands out one connection per device at a time.
             adapter.close()
             throw error
         }

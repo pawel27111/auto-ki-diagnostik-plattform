@@ -31,6 +31,8 @@ class KLineAdapter(
     private var framing: KLine.Framing = KLine.Framing.ISO9141,
 ) : ObdAdapter(link) {
 
+    override val type: ObdAdapterType get() = ObdAdapterType.KLINE
+
     private val requestLock = Mutex()
     private var lastExchangeAt = 0L
 

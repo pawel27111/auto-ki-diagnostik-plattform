@@ -58,6 +58,13 @@ data class ObdReading(
  */
 abstract class ObdAdapter(protected val link: ObdLink) {
 
+    /**
+     * What this adapter turned out to be. Not always what the user picked:
+     * [ObdConnector] falls back over USB when the chosen dialogue gets no
+     * answer, and the caller wants to know what actually worked.
+     */
+    abstract val type: ObdAdapterType
+
     /** Brings the adapter and the vehicle to the point where requests are answered. */
     abstract suspend fun initialize()
 

@@ -2,7 +2,7 @@ package com.autoki.diagnostik.data.obd
 
 import java.io.IOException
 
-class ObdTransportException(message: String) : IOException(message)
+open class ObdTransportException(message: String) : IOException(message)
 
 /**
  * A raw byte pipe to an adapter.
