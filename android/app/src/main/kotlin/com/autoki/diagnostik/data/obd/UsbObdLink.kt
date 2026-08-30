@@ -48,7 +48,18 @@ class UsbObdLink private constructor(
 
     override fun read(buffer: ByteArray, timeoutMs: Int): Int =
         try {
-            port.read(buffer, timeoutMs)
+            if (buffer.size >= MIN_READ_BUFFER) {
+                port.read(buffer, timeoutMs)
+            } else {
+                // An FTDI bridge puts two status bytes in front of every USB
+                // packet and refuses a destination that cannot hold them, so a
+                // small buffer is read through a scratch one rather than
+                // becoming an error the caller cannot act on.
+                val scratch = ByteArray(MIN_READ_BUFFER)
+                val count = port.read(scratch, timeoutMs).coerceAtMost(buffer.size)
+                scratch.copyInto(buffer, 0, 0, count)
+                count
+            }
         } catch (error: IOException) {
             throw ObdTransportException("Lesen vom USB-Adapter fehlgeschlagen: ${error.message}")
         }
@@ -97,6 +108,9 @@ class UsbObdLink private constructor(
         const val K_LINE_BAUD_RATE = 10400
 
         private const val WRITE_TIMEOUT_MS = 2000
+
+        /** Two FTDI status bytes plus room for at least one data byte. */
+        private const val MIN_READ_BUFFER = 64
         private const val PERMISSION_ACTION = "com.autoki.diagnostik.USB_PERMISSION"
 
         /** Every attached device the bundled drivers recognise. */

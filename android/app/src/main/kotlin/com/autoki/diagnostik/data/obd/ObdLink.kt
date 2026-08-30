@@ -23,6 +23,10 @@ interface ObdLink {
     /**
      * Reads whatever has arrived, blocking at most [timeoutMs].
      * Returns the number of bytes placed in [buffer]; 0 means nothing came.
+     *
+     * A one-byte buffer is allowed but wasteful: USB bridges hand over whole
+     * packets, so a caller reading byte by byte should keep what it did not
+     * ask for rather than issue a read per byte.
      */
     fun read(buffer: ByteArray, timeoutMs: Int): Int
 

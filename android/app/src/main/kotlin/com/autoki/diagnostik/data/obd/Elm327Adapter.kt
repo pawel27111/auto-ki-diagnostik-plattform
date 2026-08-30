@@ -38,7 +38,21 @@ class Elm327Adapter(
             (if (countByte == CountByteMode.PRESENT) "ATSP6" else "ATSP0") to DEFAULT_TIMEOUT_MS,
         )
         for ((command, timeoutMs) in commands) {
-            val response = sendCommand(command, timeoutMs)
+            val response = try {
+                sendCommand(command, timeoutMs)
+            } catch (error: ObdTransportException) {
+                // Silence on the very first command usually means this is not an
+                // ELM327 at all — a bare K+DCAN cable has no idea what ATZ is —
+                // and "timeout" alone sends people looking at the wrong things.
+                if (command == "ATZ") {
+                    throw ObdTransportException(
+                        "Der Adapter antwortet nicht auf ELM327-Befehle. Falls es ein " +
+                            "K+DCAN-Kabel ist: unter \u201eArt des Adapters\u201c " +
+                            "K-Line auswählen. Sonst Zündung und Steckverbindung prüfen."
+                    )
+                }
+                throw error
+            }
             if (response.trimStart().startsWith("?")) {
                 throw ObdTransportException("Adapter hat Initialisierungsbefehl $command abgelehnt")
             }

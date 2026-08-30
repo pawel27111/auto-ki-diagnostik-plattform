@@ -34,6 +34,15 @@ class KLineAdapter(
     private val requestLock = Mutex()
     private var lastExchangeAt = 0L
 
+    /**
+     * Bytes already read from the link but not yet consumed.
+     *
+     * The handshake is read one byte at a time while a single USB packet can
+     * carry several, so what a read returns beyond the byte being waited for
+     * has to be kept — dropping it would lose a key byte.
+     */
+    private val pending = ArrayDeque<Byte>()
+
     init {
         require(link.supportsLineControl) {
             "Ein K-Line-Kabel braucht eine serielle Verbindung — über Bluetooth ist der 5-Baud-Anschlag nicht möglich"
@@ -43,6 +52,7 @@ class KLineAdapter(
     override suspend fun initialize() = withContext(Dispatchers.IO) {
         link.setBaudRate(UsbObdLink.K_LINE_BAUD_RATE)
         link.setBreak(false)
+        pending.clear()
         link.flushInput()
 
         // The bus must be quiet before the address goes out (ISO 9141-2, W5).
@@ -131,6 +141,7 @@ class KLineAdapter(
             val sinceLast = System.currentTimeMillis() - lastExchangeAt
             if (sinceLast < P3_MIN_MS) Thread.sleep(P3_MIN_MS - sinceLast)
 
+            pending.clear()
             link.flushInput()
             val frame = KLine.request(data, framing)
             Log.d(LOG_TAG, "-> ${frame.toHex()}")
@@ -155,9 +166,11 @@ class KLineAdapter(
      */
     private fun readUntilQuiet(overallTimeoutMs: Long): ByteArray {
         val collected = ArrayList<Byte>()
-        val buffer = ByteArray(256)
+        while (pending.isNotEmpty()) collected += pending.removeFirst()
+
+        val buffer = ByteArray(READ_BUFFER_SIZE)
         val deadline = System.currentTimeMillis() + overallTimeoutMs
-        var lastByteAt = 0L
+        var lastByteAt = if (collected.isEmpty()) 0L else System.currentTimeMillis()
 
         while (System.currentTimeMillis() < deadline) {
             val count = link.read(buffer, READ_SLICE_MS)
@@ -173,10 +186,16 @@ class KLineAdapter(
 
     /** Reads a single byte, or null when none arrives within [timeoutMs]. */
     private fun readByte(timeoutMs: Long): Int? {
-        val buffer = ByteArray(1)
+        if (pending.isNotEmpty()) return pending.removeFirst().toInt() and 0xFF
+
+        val buffer = ByteArray(READ_BUFFER_SIZE)
         val deadline = System.currentTimeMillis() + timeoutMs
         while (System.currentTimeMillis() < deadline) {
-            if (link.read(buffer, READ_SLICE_MS) > 0) return buffer[0].toInt() and 0xFF
+            val count = link.read(buffer, READ_SLICE_MS)
+            if (count > 0) {
+                for (index in 1 until count) pending.addLast(buffer[index])
+                return buffer[0].toInt() and 0xFF
+            }
         }
         return null
     }
@@ -234,6 +253,13 @@ class KLineAdapter(
         const val RESPONSE_TIMEOUT_MS = 1500L
         const val QUIET_MS = 80L // line idle => every ECU has finished
         const val READ_SLICE_MS = 20
+
+        /**
+         * An FTDI bridge prefixes every USB packet with two status bytes and
+         * rejects a destination buffer that cannot hold them plus data, so no
+         * read may be issued with fewer than three bytes of room.
+         */
+        const val READ_BUFFER_SIZE = 256
     }
 }
 
