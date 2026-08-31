@@ -1,0 +1,1840 @@
+STATIC ANALYSIS ONLY - CP1252 PRINTABLE STRINGS WITH FILE OFFSETS
+Source: C:\EC-APPS\INPA\SGDAT\MS430.IPO
+SHA-256: 2D38A88D25AC83DA6C4D155A92A3F95565EBCBE9BE2F33F7EBC96F0B101D4585
+Tool: C:\Users\CryptoHaus\Desktop\inpa ai\tools\Export-Ms43StaticEvidence.ps1
+
+OFFSET	TEXT
+0x2	TEST-Infotext
+0x11	ergebnisTextAusgabe
+0x6B	ergebnisDigitalAusgabe
+0xC4	ergebnisAnalogAusgabe
+0x128	ergebnisUmrechnungAnalogAusgabe
+0x1E6	ansteuerung
+0x274	AnsteuerungMitPara
+0x311	m_main
+0x333	Info
+0x352	Ident
+0x372	Code
+0x391	Fehler
+0x3BE	Status
+0x3EB	Steuern
+0x419	Speicher
+0x448	Auswahl
+0x46E	Gesamt
+0x48F	Druck
+0x4A7	Ende
+0x4BE	KVP
+0x59C	EWS 3
+0x5E3	EGS/MDK
+0x605	Exit
+0x623	m_fehler
+0x663	Lesen
+0x713	Löschen
+0x7A1	Shadow
+0x852	Quick
+0xA54	Adaption
+0xAB6	Druck
+0xB82	Zurück
+0xBC3	Druck
+0xC8F	Exit
+0xCB5	m_adaption
+0xCDB	Laufun.
+0xD69	S.Zeit
+0xDF6	LM-Sen.
+0xE84	Drossel.
+0xF13	Lambda
+0xFA0	Leerl.
+0x102D	Klopfr.
+0x10BB	Varia.
+0x1148	Druck
+0x1214	Zurück
+0x1255	Exit
+0x127B	m_digital
+0x12A0	Digital
+0x12C2	FGR
+0x1367	Auswahl
+0x138D	Zurück
+0x13C2	Exit
+0x13D4	m_status
+0x13F8	Digital
+0x1426	Analog
+0x1447	PWG/MDK
+0x1469	VANOS
+0x1489	L-Sonden
+0x14AC	A-Regler
+0x14CF	LU
+0x14EC	Auswahl
+0x1512	Gesamt
+0x1533	Druck
+0x154B	Zurück
+0x1580	Exit
+0x1592	m_speicher
+0x15B8	LIN
+0x1652	Druck
+0x166A	Zurück
+0x1697	Exit
+0x16A9	m_ews
+0x16CE	store
+0x17EA	reset
+0x1906	Druck
+0x191E	Zurück
+0x194B	Exit
+0x195D	s_main
+0x1CB8	s_info
+0x1FF8	s_ident
+0x2448	s_code
+0x24A1	Anwender-Infofeld
+0x27EC	s_fehler
+0x2949	s_status
+0x2AFA	s_digital1
+0x2B8F	Status Leerlauf, Vollast
+0x2BA8	STAT_LL_EIN;STAT_TL_EIN;STAT_VL_EIN
+0x2C65	Status Schub, Schubabschaltung,  Fahrstufe
+0x2C90	STAT_SCHUB_EIN;STAT_SCHUB_AB_EIN;STAT_FAHRSTUFE_EIN
+0x2D5D	Eingang Klimaanlage, Klimakompressor
+0x2D82	STAT_AC_EIN;STAT_KO_EIN;STAT_KO_ANSTEUERUNG_EIN
+0x2E4B	Eingang  Kupplung, BLS, BLTS
+0x2E68	STAT_KUP_EIN;STAT_BLS_EIN;STAT_BLTS_EIN
+0x2F29	Eingang FGR, Start, CAN
+0x2F41	STAT_FEHLERLAMPE_EIN;STAT_FEHLERLAMPE_EML_EIN;STAT_CAN_EIN
+0x3015	L-Regler 1, L-Regler 2, Adapt.-Sperre
+0x303B	STAT_LAMBDAREGELUNG_EIN;STAT_LAMBDAREGELUNG_2_EIN;STAT_KATHEIZEN_EIN
+0x3119	Status ASC-Eingriff, EGS-Eingriff
+0x313B	STAT_ASC_EINGRIFF_EIN;STAT_EGS_EINGRIFF_EIN
+0x31D0	DISA-Relais, EKP-Relais
+0x31E8	STAT_DISA_ANSTEUERUNG_EIN;STAT_EKP_AMSTEUERUNG_EIN;STAT_TEV_EIN
+0x32C1	SLP 1, SLV
+0x32CC	STAT_SLV_EIN;STAT_SLP_EIN
+0x3363	Leckdiagnose Funktion, DMTL - VENTIL
+0x3388	STAT_LDP_EIN;STAT_REEDSWITCH_EIN
+0x340D	s_digital2
+0x34A2	Eingang FGR, Start, CAN
+0x34BA	STAT_FGR_EIN;STAT_TEMPOMAT_RUHE_EIN
+0x3547	Status FGRR
+0x3553	STAT_TEMPOMAT_VERZ_EIN;STAT_TEMPOMAT_WIEDERAUF_EIN;STAT_TEMPOMAT_BESCHL_EIN
+0x3638	Status FGRR
+0x3644	STAT_TEMPOMAT_TIPDOWN_EIN;STAT_TEMPOMAT_TIPUP_EIN;STAT_TEMPOMAT_AUS_EIN
+0x3720	s_analog1
+0x377C	Batteriespannung, Geschwindigkeit
+0x3890	Motordrehzahl,Zündwinkel
+0x399B	Kühlwassertemperatur, Kühlwasseraustrittstemperatur
+0x3AD9	Ansauglufttemperatur, Öltemperatur
+0x3C06	Gesamtluftbedarf HFM, Einspritzzeit
+0x3D14	Leerlaufregler, Tastverhältnis LL-Steller
+0x3E30	Klopfsensor 1, Klopfsensor 2
+0x3F32	s_pwg_mdk
+0x3F8E	PWG Winkel
+0x4013	PWG Poti 1 , Poti 2
+0x40ED	MDK Winkel
+0x4172	MDK Poti 1 , Poti 2
+0x4247	s_vanos
+0x42A1	NW Istlage-Einlass ,Solllage-Einlass
+0x43D8	NW Istlage-Auslass ,Solllage-Auslass
+0x452F	NW Flankenadaption NW-Einlass,NW-Auslass
+0x47B7	s_lsonden
+0x4813	Sondenspannung Bank 1
+0x4943	Sondenspannung Bank 2
+0x4A73	TV Sondenheizung Vorkat Bank 1, Vorkat Bank 2
+0x4B8B	TV Sondenheizung Nachkat Bank 1, Nachkat Bank 2
+0x4CA0	s_lregler
+0x4CFC	Lambdaintegrator 1, Lambdaintegrator 2
+0x4E1D	Adaptionswert Additiv 1, Adaptionswert Additiv 2
+0x4F48	Adaptionswert Multiplikativ 1, Adaptionswert Multiplikativ 2
+0x507A	s_laufunruhe
+0x50F5	Laufunruhe
+0x545D	s_egs
+0x54B5	DK Winkel-EGS
+0x553D	MDK Poti 1 , Poti 2
+0x5612	m_steuern
+0x5637	EV, SLP
+0x5665	LL-S | EKP
+0x5696	Steuern 3
+0x56C6	VANOS
+0x56F2	Systemcheck
+0x5724	Druck
+0x573C	Zurück
+0x5769	Exit
+0x577B	m_steuern_1
+0x57A2	EV 1
+0x57C1	EV 2
+0x57E0	EV 3
+0x57FF	EV 4
+0x581E	EV 5
+0x583D	EV 6
+0x5872	DIAG STOP
+0x58B6	Zurück
+0x58E3	Exit
+0x58F5	m_steuern_2
+0x591C	Klimakom.
+0x5940	EKP
+0x595E	LL-Steller
+0x598E	Abgaskl.
+0x59B1	DISA
+0x59D0	MIL
+0x59EE	DIAG STOP
+0x5A32	Zurück
+0x5A5F	Exit
+0x5A71	m_steuern_3
+0x5A98	LL-Drehzahl
+0x5B1E	KFT
+0x5B98	E-LÜFTER
+0x5C27	T-Kombi
+0x5CB5	LS-System
+0x5D09	DK-Winkel
+0x5DAF	Zurück
+0x5E0C	DIAG STOP
+0x5E50	Exit
+0x5E92	m_steuern_4
+0x5EB9	Ventil E
+0x5F5F	@ 
+0x5F7C	Ventil A
+0x6022	@ 
+0x603F	Sollwert E
+0x60E7	@ 
+0x6104	Sollwert A
+0x61AC	@ 
+0x61C9	Dichtheit E
+0x62A6	@!
+0x62C3	Dichtheit A
+0x63A0	@"
+0x63BD	Verstellzeit E
+0x649D	@#
+0x64BA	Verstellzeit A
+0x659A	@$
+0x65B7	Druck
+0x65CF	Zurück
+0x65FC	DIAG STOP
+0x6640	Exit
+0x6652	m_systemtest
+0x667A	DMTL-Test
+0x668D	@%
+0x66AA	TEV-Test
+0x66BC	@&
+0x66D9	SLP-Test
+0x66F7	@'
+0x6708	Zurück
+0x6735	Exit
+0x6747	m_steuern_dmtl
+0x6771	Start DMTL
+0x6785	@%
+0x67C6	Zurück
+0x67F3	Exit
+0x6805	m_steuern_TEV
+0x682E	Test-Start
+0x6842	@&
+0x6883	Test-Stop
+0x6896	@&
+0x68F7	TEV zu
+0x6930	TEV auf 20%
+0x696E	TEV auf 99%
+0x69CD	Druck
+0x69E5	Zurück
+0x6A62	Exit
+0x6AB0	m_steuern_SLP_SLV
+0x6ADD	Test-Start
+0x6B15	@'
+0x6B32	Test-Stop
+0x6B69	@'
+0x6BD2	SLP Ein 
+0x6BF9	SLV Ein 
+0x6C20	SLP Aus 
+0x6C47	SLV Aus 
+0x6C6E	Druck
+0x6C86	Zurück
+0x6D03	Exit
+0x6D51	s_adaption
+0x6EE8	s_steuern
+0x702A	s_steuern_1
+0x718A	s_steuern_2
+0x72EA	s_steuern_3
+0x744A	s_steuern_4
+0x75FE	s_systemtest
+0x770B	s_ll_drehzahl
+0x77E1	s_kf_thermostat
+0x7843	Kühlwassertemperatur, Kühlwasseraustrittstemperatur
+0x78FC	s_e_luefter
+0x79B1	s_temp_kombi
+0x7A6F	s_ls_heizung
+0x7ACE	TV Sondenheizung Vorkat Bank 1, Vorkat Bank 2
+0x7BE6	TV Sondenheizung Nachkat Bank 1, Nachkat Bank 2
+0x7CFB	ls_systemtest
+0x7FE5	slp_systemtest
+0x8343	dmtl_systemtest
+0x877A	tev_systemtest
+0x8A00	s_dk_winkel
+0x8A5E	MDK Winkel
+0x8AE3	MDK Poti 1 , Poti 2
+0x8BB8	s_vanos_lage
+0x8C17	NW Istlage-Einlass ,Solllage-Einlass
+0x8D02	NW Istlage-Auslass ,Solllage-Auslass
+0x8DF8	s_vanos_dicht_e
+0x8E5A	NW Istlage-Auslass ,Solllage-Auslass
+0x8F54	s_vanos_dicht_a
+0x8FB6	NW Istlage-Auslass ,Solllage-Auslass
+0x90B0	s_vanos_zeit_e
+0x9111	NW Istlage-Auslass ,Solllage-Auslass
+0x9257	s_vanos_zeit_a
+0x92B8	NW Istlage-Auslass ,Solllage-Auslass
+0x93FE	s_digital
+0x94EC	s_speicher
+0x95BF	s_speicher_rom
+0x97C6	s_ews
+0x98F0	inpainit
+0x9B13	inpaexit
+0x9B56	__inpa_startup__
+0x9C45	__inpa_shutdown__
+0x9C69	Global Data
+0x9CAD	Constant Data
+0x9CC5	inpa.h
+0x9CD3	ð?
+0x9CE5	ð?
+0x9CEE	ð?
+0x9CF1	MS 43.0
+0x9CFA	1.17
+0x9D00	BMW TI-431 MAJERUS
+0x9D14	MS430DS0
+0x9D1E	D_0012
+0x9D29	0x0000
+0x9D4A	4.2
+0x9D52	4.2
+0x9D5E	OKAY
+0x9D73	     Steuern
+0x9D81	    
+0x9D87	 angesteuert
+0x9D9A	OKAY
+0x9DAF	Steuern
+0x9DB8	 angesteuert Status :
+0x9DCF	Hauptmenü
+0x9DDD	Info
+0x9DE8	Ident
+0x9DF4	Code
+0x9DFF	Fehler
+0x9E0C	Status
+0x9E19	Steuern
+0x9E27	Speicher
+0x9E36	Auswahl
+0x9E44	Gesamt
+0x9E4F	Druck
+0x9E59	Ende
+0x9E62	KVP
+0x9E69	kvp_edit 
+0x9E7A	: 
+0x9EA0	EWS 3
+0x9EB3	EGS/MDK
+0x9EC1	Exit
+0x9ECA	Fehlerspeicher
+0x9EE0	Lesen
+0x9EF9	Fehlerspeicher lesen
+0x9F14	Der Fehlerspeicher wird gelesen! ... bitte warten
+0x9F5F	na_fs.tmp
+0x9F6D	na_fs.tmp
+0x9F78	Fehlerspeicher lesen
+0x9F91	Löschen
+0x9F9D	FS_LOESCHEN
+0x9FAE	OKAY
+0x9FC3	Fehlerspeicher löschen
+0x9FE0	Der Fehlerspeicher wurde gelöscht!
+0xA013	Shadow
+0xA02D	Shadowspeicher lesen
+0xA048	Der Shadowspeicher wird gelesen! ... bitte warten
+0xA091	FS_SHADOW_LESEN
+0xA0A2	na_fs.tmp
+0xA0B0	na_fs.tmp
+0xA0BB	Shadowspeicher lesen
+0xA0D4	Quick
+0xA0DE	FS_QUICK_LESEN
+0xA0F2	OKAY
+0xA107	Fehlerspeicher Quick lesen
+0xA125	F_ANZ_NR
+0xA137	Fehleranzahl
+0xA154	: 
+0xA158	 Fehler
+0xA170	Betriebsstundenzähler
+0xA193	F_BSZ_AKT
+0xA1A1	-4.1R
+0xA1AB	aktuell
+0xA1C3	: 
+0xA1C7	 [Stunden]
+0xA1DF	F_BSZ_ALT
+0xA1ED	-4.1R
+0xA1F7	beim letzten Fehlerspeicher löschen
+0xA22B	: 
+0xA22F	 [Stunden]
+0xA25A	Adaption
+0xA274	Druck
+0xA28D	Fehlerspeicher drucken
+0xA2AA	Der Fehlerspeicher wird gelesen! ... bitte warten
+0xA2F5	na_fs.tmp
+0xA303	na_fs.tmp
+0xA30E	Fehlerspeicher drucken
+0xA326	na_fs.tmp
+0xA33A	Zurück
+0xA34A	Druck
+0xA363	Shadowspeicher lesen
+0xA37E	Der Shadowspeicher wird gelesen! ... bitte warten
+0xA3C7	FS_SHADOW_LESEN
+0xA3D8	na_fs.tmp
+0xA3E6	na_fs.tmp
+0xA3F1	Shadowspeicher drucken
+0xA409	na_fs.tmp
+0xA41D	Exit
+0xA426	Adaption löschen
+0xA43B	Laufun.
+0xA447	ADAPT_LAUFUNRUHE_LOESCHEN
+0xA466	OKAY
+0xA47B	Adaption Laufunruhe löschen
+0xA49D	Adaption Laufunruhe wurde gelöscht!
+0xA4D1	S.Zeit
+0xA4DC	ADAPT_SCHLIESSZEIT_LOESCHEN
+0xA4FD	OKAY
+0xA512	Adaption Schliesszeit löschen
+0xA536	Adaption Schliesszeit wurde gelöscht!
+0xA56C	LM-Sen.
+0xA578	ADAPT_LM_SENSOR_LOESCHEN
+0xA596	OKAY
+0xA5AB	Adaption LM-Höhenkorrektur löschen
+0xA5D4	Adaption LM-Höhenkorrektur wurde gelöscht!
+0xA60F	Drossel.
+0xA61C	ADAPT_DROSSELKLAPPE_LOESCHEN
+0xA63E	OKAY
+0xA653	Adaption Drosselklappe löschen
+0xA678	Adaption Drosselklappe wurde gelöscht!
+0xA6AF	Lambda
+0xA6BA	ADAPT_LAMBDA_LOESCHEN
+0xA6D5	OKAY
+0xA6EA	Adaption Lambda löschen
+0xA708	Adaption Lambda wurde gelöscht!
+0xA738	Leerl.
+0xA743	ADAPT_LEERLAUF_LOESCHEN
+0xA760	OKAY
+0xA775	Adaption Leerlauffüllungsteller löschen
+0xA7A3	Adaption Leerlauffüllungsteller wurde gelöscht!
+0xA7E3	Klopfr.
+0xA7EF	ADAPT_KLOPFREGELUNG_LOESCHEN
+0xA811	OKAY
+0xA826	Adaption Klopfregelung löschen
+0xA84B	Adaption Klopfregelung wurde gelöscht!
+0xA882	Varia.
+0xA88D	ADAPT_VARIANTEN_LOESCHEN
+0xA8AB	OKAY
+0xA8C0	Adaption Varianten löschen
+0xA8E1	Adaption Varianten wurde gelöscht!
+0xA914	Druck
+0xA92D	Fehlerspeicher drucken
+0xA94A	Der Fehlerspeicher wird gelesen! ... bitte warten
+0xA995	na_fs.tmp
+0xA9A3	na_fs.tmp
+0xA9AE	Fehlerspeicher drucken
+0xA9C6	na_fs.tmp
+0xA9DA	Zurück
+0xA9EA	Exit
+0xA9F3	Menü Digital
+0xAA04	Digital
+0xAA12	FGR
+0xAA3F	Auswahl
+0xAA4D	Zurück
+0xAA5A	Exit
+0xAA60	Status lesen
+0xAA71	Digital
+0xAA7F	Analog
+0xAA8C	PWG/MDK
+0xAA9A	VANOS
+0xAAA6	L-Sonden
+0xAAB5	A-Regler
+0xAAC4	LU
+0xAACD	Auswahl
+0xAADB	Gesamt
+0xAAE6	Druck
+0xAAF0	Zurück
+0xAAFD	Exit
+0xAB03	Speicher lesen
+0xAB16	LIN
+0xAB1B	RAM lesen
+0xAB26	Es ist darauf zu achten, 
+0xAB41	daß die angegebene Adresse + Anzahl 
+0xAB67	der zu lesenden Bytes die Obergrenze 
+0xAB8E	(FFFF) nicht überschreitet.
+0xABAB	Adresse 000000-FFFFFF
+0xABC2	Anzahl der Bytes 1-220
+0xABDA	000000
+0xABE2	FFFFFF
+0xABFA	Druck
+0xAC04	Zurück
+0xAC11	Exit
+0xAC17	EWS 3 Startwert sync
+0xAC30	store
+0xAC37	EWS3
+0xAC3D	IDENT
+0xAC48	OKAY
+0xAC4E	EWS3
+0xAC54	WECHSELCODE_SYNC_DME
+0xAC6E	OKAY
+0xAC74	STEUERN_SYNC_MODE
+0xAC87	0x00
+0xAC8F	OKAY
+0xAC95	STEUERN_SYNC_MODE_TEXT
+0xACB2	STEUERN_SYNC_MODE_STATUS
+0xACD2	EWS 3
+0xACD9	STATUS_SYNC_MODE
+0xACEF	OKAY
+0xACF5	STATUS_SYNC_MODE_TEXT
+0xAD11	EWS 3
+0xAD1B	reset
+0xAD22	EWS3
+0xAD28	IDENT
+0xAD33	OKAY
+0xAD39	EWS3
+0xAD3F	WECHSELCODE_SYNC_DME
+0xAD59	OKAY
+0xAD5F	STEUERN_SYNC_MODE
+0xAD72	0x01
+0xAD7A	OKAY
+0xAD80	STEUERN_SYNC_MODE_TEXT
+0xAD9D	STEUERN_SYNC_MODE_STATUS
+0xADBD	EWS 3
+0xADC4	STATUS_SYNC_MODE
+0xADDA	OKAY
+0xADE0	STATUS_SYNC_MODE_TEXT
+0xADFC	EWS 3
+0xAE06	Druck
+0xAE10	Zurück
+0xAE1D	Exit
+0xAE26	Hauptmenü
+0xAE4B	IDENT
+0xAE56	OKAY
+0xAE60	BMW Teilenummer
+0xAE8C	ID_BMW_NR
+0xAEA8	Herstelldatum
+0xAED2	KW / Jahr
+0xAEF8	ID_DATUM_KW
+0xAF16	ID_DATUM_JAHR
+0xAF36	< F1 >  Information
+0xAF57	< F2 >  Identifikation
+0xAF7B	< F3 >  Codierung
+0xAF9A	< F4 >  Fehlerspeicher
+0xAFBE	< F5 >  Status lesen
+0xAFE0	< F6 >  Ansteuern
+0xAFFF	< F7 >  Speicher lesen
+0xB023	< F8 >  Auswahl
+0xB040	< F9 >  Bildschirmdruck
+0xB065	< F10>  Ende
+0xB07F	<Shift> + < F1 >  KVP-Editor
+0xB0A9	<Shift> + < F6 >  EWS 3 Startwert synchronisieren
+0xB0E8	<Shift> + < F8 >  Gesamt
+0xB10E	<Shift> + < F10>  Exit
+0xB132	Information
+0xB14B	Nacharbeitsprogramm
+0xB187	Version
+0xB1B7	Verantwortung
+0xB1ED	Steuergerätebeschreibungsdatei
+0xB234	Steuergerät
+0xB268	Version
+0xB298	Verantwortung
+0xB2CE	Sprache
+0xB300	Kommentar
+0xB332	Identifikation
+0xB35C	ident
+0xB367	OKAY
+0xB371	BMW Teilenummer
+0xB39D	ID_BMW_NR
+0xB3B4	Codierindex
+0xB3DC	ID_COD_INDEX
+0xB3F6	HW - Nr
+0xB41A	ID_HW_NR
+0xB430	Diagnoseindex
+0xB45A	ID_DIAG_INDEX
+0xB475	Busindex
+0xB49A	ID_BUS_INDEX
+0xB4B4	Herstelldatum
+0xB4DE	KW / Jahr
+0xB504	ID_DATUM_KW
+0xB522	ID_DATUM_JAHR
+0xB542	Lieferantennummer
+0xB570	ID_LIEF_NR
+0xB588	Softwarenummer
+0xB5B3	ID_SW_NR
+0xB5C9	Änderungsindex
+0xB5F4	ID_AI_NR
+0xB60A	Produktionsnummer
+0xB638	ID_PROD_NR
+0xB650	Codierdaten
+0xB677	Anwender-Infofeld
+0xB68C	AIF_LESEN
+0xB69B	OKAY
+0xB6A1	Fahrgestellnummer
+0xB6CF	aif_fg_nr
+0xB6E6	Fertigungsdatum
+0xB712	aif_datum
+0xB729	Änderungsindex
+0xB754	aif_aenderungs_index
+0xB776	Softwarenummer
+0xB7A1	aif_sw_nr
+0xB7B8	Behördennummer
+0xB7E3	aif_behoerden_nr
+0xB801	Zus.-Baunummer
+0xB82C	aif_zb_nr
+0xB843	Anzahl SG-Prog.:
+0xB861	aif_anzahl_prog
+0xB87E	ABGAS_VARIANTE_LESEN
+0xB898	OKAY
+0xB89E	Abgasvariante
+0xB8CB	abgas_variante_wert
+0xB8E6	KAT-Vorbereitung
+0xB907	KAT
+0xB918	Fehlerspeicher
+0xB946	< F1 >  Fehlerspeicher lesen
+0xB970	< F2 >  Fehlerspeicher löschen
+0xB99C	< F3 >  Shadowspeicher lesen
+0xB9C6	< F4 >  Fehlerspeicher Quick lesen
+0xB9F6	< F7 >  Adaptionen loeschen
+0xBA1F	< F9 >  Fehlerspeicher drucken
+0xBA4B	< F10>  Zurück
+0xBA67	<Shift> + < F9 >  Shadowspeicher drucken
+0xBA9D	<Shift> + < F10>  Exit
+0xBAC1	Status lesen
+0xBAED	< F1 >  Digitalwerte
+0xBB0F	< F2 >  Analogwerte allgemein
+0xBB3A	< F3 >  Gebersignale PWG / MDK
+0xBB66	< F4 >  Gebersignale VANOS
+0xBB8E	< F5 >  Lambdasonden
+0xBBB0	< F6 >  Abgasregelung
+0xBBD3	< F7 >  Laufunruhe
+0xBBF3	< F8 >  Auswahl
+0xBC10	< F9 >  Bildschirmdruck
+0xBC35	< F10>  Ende
+0xBC4F	<Shift> + < F8 >  Gesamt
+0xBC75	<Shift> + < F10>  Exit
+0xBC99	Digitalwerte 1
+0xBCC7	STATUS_DIGITAL
+0xBCD9	OKAY
+0xBCDF	Status Leerlauf, Vollast
+0xBCF9	STAT_LL_EIN;STAT_TL_EIN;STAT_VL_EIN
+0xBD24	Status Leerlauf
+0xBD35	STAT_LL_EIN
+0xBD48	 EIN    
+0xBD52	 AUS  
+0xBD60	Status Teillast
+0xBD71	STAT_TL_EIN
+0xBD84	 EIN    
+0xBD8E	 AUS  
+0xBD9C	Status Vollast
+0xBDAC	STAT_VL_EIN
+0xBDBF	 EIN    
+0xBDC9	 AUS  
+0xBDD1	Status Schub, Schubabschaltung,  Fahrstufe
+0xBDFD	STAT_SCHUB_EIN;STAT_SCHUB_AB_EIN;STAT_FAHRSTUFE_EIN
+0xBE38	Schub
+0xBE3F	STAT_SCHUB_EIN
+0xBE55	 EIN    
+0xBE5F	 AUS  
+0xBE6D	 Schubabschaltung
+0xBE80	STAT_SCHUBAB_EIN
+0xBE98	 EIN    
+0xBEA2	 AUS  
+0xBEB0	Fahrstufe
+0xBEBB	STAT_FAHRSTUFE_EIN
+0xBED5	 EIN    
+0xBEDF	 AUS  
+0xBEE7	Eingang Klimaanlage, Klimakompressor
+0xBF0D	STAT_AC_EIN;STAT_KO_EIN;STAT_KO_ANSTEUERUNG_EIN
+0xBF44	Eingang Klimaanlage
+0xBF59	STAT_AC_EIN
+0xBF6C	 EIN    
+0xBF76	 AUS  
+0xBF84	Eingang Klimakompressor
+0xBF9D	STAT_KO_EIN
+0xBFB0	 EIN    
+0xBFBA	 AUS  
+0xBFC8	Ausgang Klimakompressor
+0xBFE1	STAT_KO_ANSTEUERUNG_EIN
+0xC000	 EIN    
+0xC00A	 AUS  
+0xC012	Eingang  Kupplung, BLS, BLTS
+0xC030	STAT_KUP_EIN;STAT_BLS_EIN;STAT_BLTS_EIN
+0xC05F	Eingang Kupplungschalter
+0xC079	STAT_KUP_EIN
+0xC08D	 EIN    
+0xC097	 AUS  
+0xC0A5	Eingang Bremslichtschalter
+0xC0C1	STAT_BLS_EIN
+0xC0D5	 EIN    
+0xC0DF	 AUS  
+0xC0ED	Eingang Bremslichttestschalter
+0xC10D	STAT_BLTS_EIN
+0xC122	 EIN    
+0xC12C	 AUS  
+0xC134	Eingang FGR, Start, CAN
+0xC14D	STAT_FEHLERLAMPE_EIN;STAT_FEHLERLAMPE_EML_EIN;STAT_CAN_EIN
+0xC18F	Fehlerlampe MIL
+0xC1A0	STAT_FEHLERLAMPE_EIN
+0xC1BC	 EIN    
+0xC1C6	 AUS  
+0xC1D4	 Fehlerlampe EML
+0xC1E6	STAT_FEHLERLAMPE_EML_EIN
+0xC206	 EIN    
+0xC210	 AUS  
+0xC21E	Status CAN
+0xC22A	STAT_CAN_EIN
+0xC23E	 EIN    
+0xC248	 AUS  
+0xC250	L-Regler 1, L-Regler 2, Adapt.-Sperre
+0xC277	STAT_LAMBDAREGELUNG_EIN;STAT_LAMBDAREGELUNG_2_EIN;STAT_KATHEIZEN_EIN
+0xC2C3	Lambdaregelung Bank 1
+0xC2DA	STAT_LAMBDAREGELUNG_EIN
+0xC2F9	 EIN    
+0xC303	 AUS  
+0xC311	 Lambdaregelung Bank 2
+0xC329	STAT_LAMBDAREGELUNG_2_EIN
+0xC34A	 EIN    
+0xC354	 AUS  
+0xC362	Status Katheizen
+0xC374	STAT_KATHEIZEN_EIN
+0xC38E	 AKTIV    
+0xC39A	 INAKTIV  
+0xC3A6	Status ASC-Eingriff, EGS-Eingriff
+0xC3C9	STAT_ASC_EINGRIFF_EIN;STAT_EGS_EINGRIFF_EIN
+0xC3FC	ASC-Eingriff
+0xC40A	STAT_ASC_EINGRIFF_EIN
+0xC427	 AKTIV    
+0xC433	 AUS  
+0xC441	 EGS-Eingriff
+0xC450	STAT_EGS_EINGRIFF_EIN
+0xC46D	 AKTIV    
+0xC479	 AUS  
+0xC481	DISA-Relais, EKP-Relais
+0xC49A	STAT_DISA_ANSTEUERUNG_EIN;STAT_EKP_AMSTEUERUNG_EIN;STAT_TEV_EIN
+0xC4E1	DISA-Relais
+0xC4EE	STAT_DISA_ANSTEUERUNG_EIN
+0xC50F	 EIN    
+0xC519	 AUS  
+0xC527	 EKP-Relais
+0xC534	STAT_EKP_ANSTEUERUNG_EIN
+0xC554	 EIN    
+0xC55E	 AUS  
+0xC56C	Tankentlueftungsventil
+0xC584	STAT_TEV_EIN
+0xC598	 EIN    
+0xC5A2	 AUS  
+0xC5AA	SLP 1, SLV
+0xC5B6	STAT_SLV_EIN;STAT_SLP_EIN
+0xC5D7	Sekundaerluftventil
+0xC5F2	nicht im E53 PU09/03!!!
+0xC60B	STAT_SLV_EIN
+0xC61F	 EIN    
+0xC629	 AUS  
+0xC637	Relais Sekundaerluftpumpe
+0xC652	STAT_SLP_EIN
+0xC666	 EIN    
+0xC670	 AUS  
+0xC678	Leckdiagnose Funktion, DMTL - VENTIL
+0xC69E	STAT_LDP_EIN;STAT_REEDSWITCH_EIN
+0xC6C6	Leckdiagnose Funktion DMTL
+0xC6E2	STAT_DMTL_ANSTEUERUNG_EIN
+0xC703	 AKTIV    
+0xC70F	 AUS  
+0xC71D	 DMTL - VENTIL
+0xC72D	STAT_DMTL_EIN
+0xC742	 EIN    
+0xC74C	 AUS  
+0xC754	Digitalstatus FGR
+0xC785	STATUS_DIGITAL
+0xC797	OKAY
+0xC79D	Eingang FGR, Start, CAN
+0xC7B6	STAT_FGR_EIN;STAT_TEMPOMAT_RUHE_EIN
+0xC7E1	Eingang FGR Bereitschaft
+0xC7FB	STAT_FGR_EIN
+0xC80F	 EIN    
+0xC819	 AUS  
+0xC827	 FGR Ruhe
+0xC832	STAT_TEMPOMAT_RUHE_EIN
+0xC850	 EIN    
+0xC85A	 AUS  
+0xC862	Status FGRR
+0xC86F	STAT_TEMPOMAT_VERZ_EIN;STAT_TEMPOMAT_WIEDERAUF_EIN;STAT_TEMPOMAT_BESCHL_EIN
+0xC8C2	FGR - Verzögerung
+0xC8D5	STAT_TEMPOMAT_VERZ_EIN
+0xC8F3	 EIN    
+0xC8FD	 AUS  
+0xC90B	 FGR - Wiederaufnahme
+0xC922	STAT_TEMPOMAT_WIEDERAUF_EIN
+0xC945	 EIN    
+0xC94F	 AUS  
+0xC95D	FGR - Beschleunigung
+0xC973	STAT_TEMPOMAT_BESCHL_EIN
+0xC993	 EIN    
+0xC99D	 AUS  
+0xC9A5	Status FGRR
+0xC9B2	STAT_TEMPOMAT_TIPDOWN_EIN;STAT_TEMPOMAT_TIPUP_EIN;STAT_TEMPOMAT_AUS_EIN
+0xCA01	FGR - TIP DOWN
+0xCA11	STAT_TEMPOMAT_TIPDOWN_EIN
+0xCA32	 EIN    
+0xCA3C	 AUS  
+0xCA4A	 FGR - TIP UP
+0xCA59	STAT_TEMPOMAT_TIPUP_EIN
+0xCA78	 EIN    
+0xCA82	 AUS  
+0xCA90	FGR - AUS
+0xCA9B	STAT_TEMPOMAT_AUS_EIN
+0xCAB8	 EIN    
+0xCAC2	 AUS  
+0xCACA	Analogwerte
+0xCAF1	Batteriespannung, Geschwindigkeit
+0xCB1C	Batteriespannung
+0xCB34	[Volt]
+0xCB3C	STATUS_UBATT
+0xCB4E	OKAY
+0xCB54	STAT_UBATT_WERT
+0xCB7A	2@
+0xCB8C	2@
+0xCB95	Geschwindigkeit
+0xCBAC	[km/h]
+0xCBB4	STATUS_GESCHWINDIGKEIT
+0xCBD0	OKAY
+0xCBD6	STAT_GESCHWINDIGKEIT_WERT
+0xCC0E	@o@
+0xCC20	@o@
+0xCC24	Motordrehzahl,Zündwinkel
+0xCC46	Motordrehzahl
+0xCC5B	[1/min]
+0xCC64	STATUS_MOTORDREHZAHL
+0xCC7E	OKAY
+0xCC84	STAT_MOTORDREHZAHL_WERT
+0xCCB1	p·@
+0xCCC3	p·@
+0xCCCD	Zündwinkel
+0xCCDF	[°KW]
+0xCCE6	STATUS_ZUENDWINKEL
+0xCCFE	OKAY
+0xCD04	STAT_ZUENDWINKEL_WERT
+0xCD27	4@
+0xCD30	>@
+0xCD39	4@
+0xCD42	>@
+0xCD45	Kühlwassertemperatur, Kühlwasseraustrittstemperatur
+0xCD82	Kühlwassertemperatur
+0xCD9E	[°C]
+0xCDA4	STATUS_MOTORTEMPERATUR
+0xCDC0	OKAY
+0xCDC6	STAT_MOTORTEMPERATUR_WERT
+0xCDED	I@
+0xCDF6	^@
+0xCDFF	I@
+0xCE08	^@
+0xCE11	Kühlwasseraustrittstemperatur
+0xCE36	[°C]
+0xCE3C	STATUS_KUEHLW_AUSL_TEMPERATUR
+0xCE5F	OKAY
+0xCE65	STAT_KUEHLW_AUSL_TEMPERATUR_WERT
+0xCE93	I@
+0xCE9C	^@
+0xCEA5	I@
+0xCEAE	^@
+0xCEB1	Ansauglufttemperatur, Öltemperatur
+0xCEDD	Ansauglufttemperatur
+0xCEF9	[°C]
+0xCEFF	STATUS_AN_LUFTTEMPERATUR
+0xCF1D	OKAY
+0xCF23	STAT_AN_LUFTTEMPERATUR_WERT
+0xCF4C	I@
+0xCF55	^@
+0xCF5E	I@
+0xCF67	^@
+0xCF70	Öltemperatur
+0xCF84	[°C]
+0xCF8A	STATUS_OEL_TEMPERATUR
+0xCFA5	OKAY
+0xCFAB	STAT_OEL_TEMPERATUR_WERT
+0xCFD1	I@
+0xCFDA	^@
+0xCFE3	I@
+0xCFEC	^@
+0xCFEF	Gesamtluftbedarf HFM, Einspritzzeit
+0xD01C	Gesamtluftbedarf HLM
+0xD038	[kg/h]
+0xD040	STATUS_LMM_MASSE
+0xD056	OKAY
+0xD05C	STAT_LMM_MASSE_WERT
+0xD086	Y@
+0xD098	Y@
+0xD0A1	Einspritzzeit
+0xD0B6	[ms]
+0xD0BC	STATUS_EINSPRITZZEIT
+0xD0D6	OKAY
+0xD0DC	STAT_EINSPRITZZEIT_WERT
+0xD10A	$@
+0xD11C	$@
+0xD11F	Leerlaufregler, Tastverhältnis LL-Steller
+0xD152	Leerlaufregler
+0xD168	[%]
+0xD16D	STATUS_LL_INTEGRATOR
+0xD187	OKAY
+0xD18D	STAT_LL_INTEGRATOR_WERT
+0xD1B2	4@
+0xD1BB	4@
+0xD1C4	4@
+0xD1CD	4@
+0xD1D6	Tastverhältnis LL-Steller
+0xD1F7	[%]
+0xD1FC	STATUS_LL_STELLER_TV
+0xD216	OKAY
+0xD21C	STAT_LL_STELLER_TV_WERT
+0xD24A	Y@
+0xD25C	Y@
+0xD25F	Klopfsensor 1, Klopfsensor 2
+0xD285	Klopfsensor 1
+0xD29A	[V]
+0xD29F	STATUS_KLOPF_ADC1
+0xD2B6	OKAY
+0xD2BC	STAT_KLOPF_ADC1_WERT
+0xD2E7	4@
+0xD2F9	4@
+0xD302	Klopfsensor 2
+0xD317	[V]
+0xD31C	STATUS_KLOPF_ADC2
+0xD333	OKAY
+0xD339	STAT_KLOPF_ADC2_WERT
+0xD364	4@
+0xD376	4@
+0xD379	Pedalwertgeber (PWG)  /  Motordrosselklappe (MDK)
+0xD3C6	PWG Winkel
+0xD3DA	PWG-Winkel
+0xD3EC	[°PWG]
+0xD3F4	STATUS_PWG1_WINKEL
+0xD40C	OKAY
+0xD412	STAT_PWG1_WINKEL_WERT
+0xD43E	^@
+0xD450	^@
+0xD453	PWG Poti 1 , Poti 2
+0xD470	PWG-Spannung Poti 1
+0xD48B	[V]
+0xD490	STATUS_PWG_POTI_SPANNUNG
+0xD4AE	OKAY
+0xD4B4	STAT_PWG_POTI_SPANNUNG_1_WERT
+0xD503	PWG-Spannung Poti 2
+0xD51E	[V]
+0xD523	STAT_PWG_POTI_SPANNUNG_2_WERT
+0xD56C	MDK Winkel
+0xD580	DKP-Winkel
+0xD592	[°DK]
+0xD599	STATUS_DKP_WINKEL
+0xD5B0	OKAY
+0xD5B6	STAT_DKP_WINKEL_WERT
+0xD5E1	^@
+0xD5F3	^@
+0xD5F6	MDK Poti 1 , Poti 2
+0xD613	MDK-Spannung Poti 1
+0xD62E	[V]
+0xD633	STATUS_MDK_POTI_SPANNUNG
+0xD651	OKAY
+0xD657	STAT_MDK_POTI_SPANNUNG_1_WERT
+0xD6A6	MDK-Spannung Poti 2
+0xD6C1	[V]
+0xD6C6	STAT_MDK_POTI_SPANNUNG_2_WERT
+0xD70F	VANOS
+0xD730	NW Istlage-Einlass ,Solllage-Einlass
+0xD758	STATUS_VANOS_NW_LAGE_IST_SOLL_REF_EINLASS
+0xD787	OKAY
+0xD793	NW Istlage-Einlass
+0xD7AD	[Grad KW]
+0xD7B8	STAT_VANOS_NW_LAGE_EINLASS_IST_WERT
+0xD7E9	I@
+0xD7F1	@`@
+0xD7FB	I@
+0xD803	@`@
+0xD80D	NW Solllage-Einlass
+0xD828	[Grad KW]
+0xD833	STAT_VANOS_NW_LAGE_EINLASS_SOLL_WERT
+0xD865	I@
+0xD86D	@`@
+0xD877	I@
+0xD87F	@`@
+0xD889	NW Reflage-Einlass
+0xD8A3	[Grad KW]
+0xD8AE	STAT_VANOS_NW_LAGE_EINLASS_REF_WERT
+0xD8DF	N@
+0xD8E7	`c@
+0xD8F1	N@
+0xD8F9	`c@
+0xD8FD	NW Istlage-Auslass ,Solllage-Auslass
+0xD925	STATUS_VANOS_NW_LAGE_IST_SOLL_REF_AUSLASS
+0xD954	OKAY
+0xD960	NW Istlage-Auslass
+0xD97A	[Grad KW]
+0xD985	STAT_VANOS_NW_LAGE_AUSLASS_IST_WERT
+0xD9B5	@`@
+0xD9BF	4@
+0xD9C7	@`@
+0xD9D1	4@
+0xD9DA	NW Solllage-Auslass
+0xD9F5	[Grad KW]
+0xDA00	STAT_VANOS_NW_LAGE_AUSLASS_SOLL_WERT
+0xDA31	@`@
+0xDA3B	4@
+0xDA43	@`@
+0xDA4D	4@
+0xDA56	NW Reflage-Auslass
+0xDA70	[Grad KW]
+0xDA7B	STAT_VANOS_NW_LAGE_AUSLASS_REF_WERT
+0xDAAB	`c@
+0xDAB5	N@
+0xDABD	`c@
+0xDAC7	N@
+0xDACA	NW Flankenadaption NW-Einlass,NW-Auslass
+0xDAF6	STATUS_VANOS_NW_FLANKENADAPTION
+0xDB1B	OKAY
+0xDB27	NW Flankenadaption-Einlass
+0xDB49	[Grad KW]
+0xDB54	STAT_VANOS_NW_FLANKENADAPTION_EINLASS_WERT
+0xDB8C	H@
+0xDB95	H@
+0xDB9E	H@
+0xDBA7	H@
+0xDBB0	NW Flankenadaption-Auslass
+0xDBD2	[Grad KW]
+0xDBDD	STAT_VANOS_NW_FLANKENADAPTION_AUSLASS_WERT
+0xDC15	H@
+0xDC1E	H@
+0xDC27	H@
+0xDC30	H@
+0xDC37	STATUS_VERSTELLZEIT_MESS_VANOS_E
+0xDC5D	OKAY
+0xDC69	NW-Einlass Verstellzeit früh nach spät
+0xDC97	[ms]
+0xDC9D	STAT_VERSTELLZEIT_MESS_VANOS_E_FR_WERT
+0xDCD9	P¤@
+0xDCEB	P¤@
+0xDCF5	NW-Einlass Verstellzeit spät nach früh
+0xDD23	[ms]
+0xDD29	STAT_VERSTELLZEIT_MESS_VANOS_E_SP_WERT
+0xDD65	P¤@
+0xDD77	P¤@
+0xDD7F	STATUS_VERSTELLZEIT_MESS_VANOS_A
+0xDDA5	OKAY
+0xDDB1	NW-Auslass Verstellzeit früh nach spät
+0xDDDF	[ms]
+0xDDE5	STAT_VERSTELLZEIT_MESS_VANOS_A_FR_WERT
+0xDE21	P¤@
+0xDE33	P¤@
+0xDE3D	NW-Auslass Verstellzeit spät nach früh
+0xDE6B	[ms]
+0xDE71	STAT_VERSTELLZEIT_MESS_VANOS_A_SP_WERT
+0xDEAD	P¤@
+0xDEBF	P¤@
+0xDEC3	Lambdasonden Bank 1 / 2 
+0xDEF7	Sondenspannung Bank 1
+0xDF16	Lambdasonde vor Kat. Bank 1
+0xDF39	[V]
+0xDF3E	STATUS_L_SONDE
+0xDF52	OKAY
+0xDF58	STAT_L_SONDE_WERT
+0xDF98	4.2
+0xDFA3	Lambdasonde hinter Kat. Bank 1
+0xDFC9	[V]
+0xDFCE	STATUS_L_SONDE_H
+0xDFE4	OKAY
+0xDFEA	STAT_L_SONDE_H_WERT
+0xE02C	4.2
+0xE031	Sondenspannung Bank 2
+0xE050	Lambdasonde vor Kat. Bank 2
+0xE073	[V]
+0xE078	STATUS_L_SONDE_2
+0xE08E	OKAY
+0xE094	STAT_L_SONDE_2_WERT
+0xE0D6	4.2
+0xE0E1	Lambdasonde hinter Kat. Bank 2
+0xE107	[V]
+0xE10C	STATUS_L_SONDE_2_H
+0xE124	OKAY
+0xE12A	STAT_L_SONDE_2_H_WERT
+0xE16E	4.2
+0xE173	TV Sondenheizung Vorkat Bank 1, Vorkat Bank 2
+0xE1AA	TV Sondenheizung Vorkat Bank 1
+0xE1D0	[%]
+0xE1D5	STATUS_LS_VKAT_HEIZUNG_TV_1
+0xE1F6	OKAY
+0xE1FC	STAT_LS_VKAT_HEIZUNG_TV_1_WERT
+0xE231	Y@
+0xE243	Y@
+0xE24C	TV Sondenheizung Vorkat Bank 2
+0xE272	[%]
+0xE277	STATUS_LS_VKAT_HEIZUNG_TV_2
+0xE298	OKAY
+0xE29E	STAT_LS_VKAT_HEIZUNG_TV_2_WERT
+0xE2D3	Y@
+0xE2E5	Y@
+0xE2E8	TV Sondenheizung Nachkat Bank 1, Nachkat Bank 2
+0xE321	TV Sondenheizung Nachkat Bank 1
+0xE348	[%]
+0xE34D	STATUS_LS_NKAT_HEIZUNG_TV_1
+0xE36E	OKAY
+0xE374	STAT_LS_NKAT_HEIZUNG_TV_1_WERT
+0xE3A9	Y@
+0xE3BB	Y@
+0xE3C4	TV Sondenheizung Nachkat Bank 2
+0xE3EB	[%]
+0xE3F0	STATUS_LS_NKAT_HEIZUNG_TV_2
+0xE411	OKAY
+0xE417	STAT_LS_NKAT_HEIZUNG_TV_2_WERT
+0xE44C	Y@
+0xE45E	Y@
+0xE461	Gemischadaption
+0xE48C	Lambdaintegrator 1, Lambdaintegrator 2
+0xE4BC	Lambdaintegrator 1
+0xE4D6	[%]
+0xE4DB	STATUS_INT
+0xE4EB	OKAY
+0xE4F1	STAT_INT_WERT
+0xE50C	Y@
+0xE515	Y@
+0xE51E	$@
+0xE527	$@
+0xE530	Lambdaintegrator 2
+0xE54A	[%]
+0xE54F	STATUS_INT_2
+0xE561	OKAY
+0xE567	STAT_INT_2_WERT
+0xE584	Y@
+0xE58D	Y@
+0xE596	$@
+0xE59F	$@
+0xE5A2	Adaptionswert Additiv 1, Adaptionswert Additiv 2
+0xE5DC	Adaptionswert Additiv 1
+0xE5FB	[ms]
+0xE601	STATUS_LAMBDA_ADD_1
+0xE61A	OKAY
+0xE620	STAT_LAMBDA_ADD_1_WERT
+0xE643	@`@
+0xE64C	@`@
+0xE655	@`@
+0xE65E	@`@
+0xE668	Adaptionswert Additiv 2
+0xE687	[ms]
+0xE68D	STATUS_LAMBDA_ADD_2
+0xE6A6	OKAY
+0xE6AC	STAT_LAMBDA_ADD_2_WERT
+0xE6CF	@`@
+0xE6D8	@`@
+0xE6E1	@`@
+0xE6EA	@`@
+0xE6EE	Adaptionswert Multiplikativ 1, Adaptionswert Multiplikativ 2
+0xE734	Adaptionswert Multiplikativ 1
+0xE759	[%]
+0xE75E	STATUS_LAMBDA_MUL_1
+0xE777	OKAY
+0xE77D	STAT_LAMBDA_MUL_1_WERT
+0xE7A1	I@
+0xE7AA	I@
+0xE7B3	I@
+0xE7BC	I@
+0xE7C5	Adaptionswert Multiplikativ 2
+0xE7EA	[%]
+0xE7EF	STATUS_LAMBDA_MUL_2
+0xE808	OKAY
+0xE80E	STAT_LAMBDA_MUL_2_WERT
+0xE832	I@
+0xE83B	I@
+0xE844	I@
+0xE84D	I@
+0xE850	Laufunruhe
+0xE876	Laufunruhe
+0xE884	STATUS_SYSTEMCHECK_LAUFUNRUHE
+0xE8A7	OKAY
+0xE8BC	4@
+0xE8C5	4@
+0xE8CE	4@
+0xE8D7	4@
+0xE8E0	4@
+0xE8E9	4@
+0xE8EC	STAT_SYSTEMCHECK_LAUFUNRUHE_ZYL1_WERT
+0xE916	STAT_SYSTEMCHECK_LAUFUNRUHE_ZYL2_WERT
+0xE940	STAT_SYSTEMCHECK_LAUFUNRUHE_ZYL3_WERT
+0xE96A	STAT_SYSTEMCHECK_LAUFUNRUHE_ZYL4_WERT
+0xE994	STAT_SYSTEMCHECK_LAUFUNRUHE_ZYL5_WERT
+0xE9BE	STAT_SYSTEMCHECK_LAUFUNRUHE_ZYL6_WERT
+0xE9EE	Zylinder 1 [%]
+0xEA13	$@
+0xEA28	1.3
+0xEA33	Zylinder 5 [%]
+0xEA58	$@
+0xEA6D	1.3
+0xEA78	Zylinder 3 [%]
+0xEA9D	$@
+0xEAB2	1.3
+0xEABD	Zylinder 6 [%]
+0xEAE2	$@
+0xEAF7	1.3
+0xEB02	Zylinder 2 [%]
+0xEB27	$@
+0xEB3C	1.3
+0xEB47	Zylinder 4 [%]
+0xEB6C	$@
+0xEB81	1.3
+0xEB86	DK-Winkel EGS  /  Motordrosselklappe (MDK)
+0xEBCC	DK Winkel-EGS
+0xEBE3	DK-Winkel
+0xEBF4	[°DK]
+0xEBFB	STATUS_PWG_WINKEL
+0xEC12	OKAY
+0xEC18	STAT_PWG_WINKEL_WERT
+0xEC43	[@
+0xEC55	[@
+0xEC58	MDK Poti 1 , Poti 2
+0xEC75	MDK-Spannung Poti 1
+0xEC90	[V]
+0xEC95	STATUS_MDK_POTI_SPANNUNG
+0xECB3	OKAY
+0xECB9	STAT_MDK_POTI_SPANNUNG_1_WERT
+0xED08	MDK-Spannung Poti 2
+0xED23	[V]
+0xED28	STAT_MDK_POTI_SPANNUNG_2_WERT
+0xED71	Steuern
+0xED7D	EV, SLP
+0xED8B	LL-S | EKP
+0xED9C	Steuern 3
+0xEDAC	VANOS
+0xEDB8	Systemcheck
+0xEDCA	Druck
+0xEDD4	Zurück
+0xEDE1	Exit
+0xEDE7	Steuern EV
+0xEDF6	EV 1
+0xEDFC	STEUERN_EV_1
+0xEE0A	Einspritzventil Zylinder 1
+0xEE29	EV 2
+0xEE2F	STEUERN_EV_2
+0xEE3D	Einspritzventil Zylinder 2
+0xEE5C	EV 3
+0xEE62	STEUERN_EV_3
+0xEE70	Einspritzventil Zylinder 3
+0xEE8F	EV 4
+0xEE95	STEUERN_EV_4
+0xEEA3	Einspritzventil Zylinder 4
+0xEEC2	EV 5
+0xEEC8	STEUERN_EV_5
+0xEED6	Einspritzventil Zylinder 5
+0xEEF5	EV 6
+0xEEFB	STEUERN_EV_6
+0xEF09	Einspritzventil Zylinder 6
+0xEF32	DIAG STOP
+0xEF3D	DIAGNOSE_ENDE
+0xEF50	OKAY
+0xEF5C	Zurück
+0xEF69	Exit
+0xEF6F	Steuern 2
+0xEF7D	Klimakom.
+0xEF88	STEUERN_KO
+0xEF94	Relais Klimakompressor
+0xEFAF	EKP
+0xEFB4	STEUERN_EKP
+0xEFC1	Relais Kraftstoffpumpe
+0xEFDC	LL-Steller
+0xEFE8	STEUERN_LL_STELLER
+0xEFFC	Leerlaufsteller
+0xF015	Abgaskl.
+0xF01F	STEUERN_ABGASKLAPPE
+0xF034	Abgasklappe
+0xF044	DISA
+0xF04A	STEUERN_DISA
+0xF058	DISA
+0xF061	MIL
+0xF066	STEUERN_MIL
+0xF073	MIL
+0xF07B	DIAG STOP
+0xF086	DIAGNOSE_ENDE
+0xF099	OKAY
+0xF0A5	Zurück
+0xF0B2	Exit
+0xF0B8	Steuern 3
+0xF0C6	LL-Drehzahl
+0xF0D3	Drehzahlanhebung
+0xF0E5	LL-Drehzahlanhebung 600 - 1600 1/min
+0xF11D	10
+0xF121	STEUERN_LL_DREHZAHL_VERSTELLEN
+0xF143	OKAY
+0xF14E	KFT
+0xF153	Kennfeld-Thermostat
+0xF168	Tastverhaeltnis 20-80 %
+0xF187	STEUERN_KF_THERMOSTAT
+0xF1A0	OKAY
+0xF1AB	E-LÜFTER
+0xF1B5	E-Lüfter
+0xF1BF	Verstellung E-Lüfter 10-90 %
+0xF1E3	STEUERN_E_LUEFTER
+0xF1F8	OKAY
+0xF203	T-Kombi
+0xF20C	Temperatur Kombi
+0xF21E	Verstellung Temperatur Kombi -40 -120 Grad C
+0xF252	STEUERN_TEMP_ANZEIGE_KOMBI
+0xF270	OKAY
+0xF27B	LS-System
+0xF286	START_SYSTEMCHECK_SONDENHEIZUNG
+0xF2A9	OKAY
+0xF2B4	DK-Winkel
+0xF2BF	DK-Winkel
+0xF2CA	Verstellung MDK DK-Winkel von 0 bis 17 (nur bei 0 min-1!!!)
+0xF30D	STEUERN_DK_WINKEL
+0xF322	OKAY
+0xF337	Zurück
+0xF33F	DIAGNOSE_ENDE
+0xF352	OKAY
+0xF360	DIAG STOP
+0xF36B	DIAGNOSE_ENDE
+0xF37E	OKAY
+0xF38A	Exit
+0xF390	DIAGNOSE_ENDE
+0xF3A3	OKAY
+0xF3AC	Systemtest VANOS
+0xF3C1	Ventil E
+0xF3D4	10
+0xF3D8	STEUERN_LL_DREHZAHL_VERSTELLEN
+0xF3FA	OKAY
+0xF400	Ventil VANOS E 
+0xF411	Ventil ansteuern 0-100 [%]
+0xF433	STEUERN_VANOS_E_VENTIL
+0xF44D	OKAY
+0xF458	Ventil A
+0xF46B	10
+0xF46F	STEUERN_VANOS_A_VENTIL
+0xF489	OKAY
+0xF48F	Ventil VANOS E 
+0xF4A0	Ventil ansteuern 5-95 [%]
+0xF4C1	STEUERN_VANOS_A_SOLLWERT
+0xF4DD	OKAY
+0xF4E8	Sollwert E
+0xF4FD	10
+0xF501	STEUERN_LL_DREHZAHL_VERSTELLEN
+0xF523	OKAY
+0xF529	Sollwert VANOS E 
+0xF53C	Sollwert vorgeben 54-160 [1]
+0xF560	STEUERN_VANOS_E_SOLLWERT
+0xF57C	OKAY
+0xF587	Sollwert A
+0xF59C	10
+0xF5A0	STEUERN_LL_DREHZAHL_VERSTELLEN
+0xF5C2	OKAY
+0xF5C8	Sollwert VANOS E 
+0xF5DB	Sollwert vorgeben 54-120 [1]
+0xF5FF	STEUERN_VANOS_A_SOLLWERT
+0xF61B	OKAY
+0xF626	Dichtheit E
+0xF63C	10
+0xF640	STEUERN_LL_DREHZAHL_VERSTELLEN
+0xF662	OKAY
+0xF668	Dichtheit VANOS E
+0xF67B	Dichtheitsprüfung VANOS Einslass
+0xF69D	Sollwert Einlass (54 - 160)
+0xF6BA	Zeit für Messung (1-30)
+0xF6DF	STEUERN_VANOS_E_DICHTHEIT
+0xF6FF	OKAY
+0xF70A	Dichtheit A
+0xF720	10
+0xF724	STEUERN_LL_DREHZAHL_VERSTELLEN
+0xF746	OKAY
+0xF74C	Dichtheit VANOS A
+0xF75F	Dichtheitsprüfung VANOS Einslass
+0xF781	Sollwert Einlass (54-120)
+0xF79C	Zeit für Messung (1-30)
+0xF7C1	STEUERN_VANOS_A_DICHTHEIT
+0xF7E1	OKAY
+0xF7EC	Verstellzeit E
+0xF805	10
+0xF809	STEUERN_LL_DREHZAHL_VERSTELLEN
+0xF82B	OKAY
+0xF831	Verstellzeit VANOS E
+0xF847	Dichtheitsprüfung VANOS Einslass
+0xF869	Sollwert 1 (54 - 160)
+0xF880	Sollwert2 (54 - 160)
+0xF8A2	STEUERN_VANOS_E_VERSTELLZEIT
+0xF8C5	OKAY
+0xF8D0	Verstellzeit A
+0xF8E9	10
+0xF8ED	STEUERN_LL_DREHZAHL_VERSTELLEN
+0xF90F	OKAY
+0xF915	Verstellzeit VANOS A
+0xF92B	Dichtheitsprüfung VANOS Einslass
+0xF94D	Sollwert 1 (54-120)
+0xF962	Sollwert 2 (54-120)
+0xF983	STEUERN_VANOS_A_VERSTELLZEIT
+0xF9A6	OKAY
+0xF9B1	Druck
+0xF9BB	Zurück
+0xF9C8	DIAG STOP
+0xF9D3	DIAGNOSE_ENDE
+0xF9E6	OKAY
+0xF9F2	Exit
+0xF9F8	Steuern 5
+0xFA06	DMTL-Test
+0xFA16	TEV-Test
+0xFA25	SLP-Test
+0xFA34	Zurück
+0xFA41	Exit
+0xFA47	Steuern 5
+0xFA55	Start DMTL
+0xFA63	START_SYSTEMCHECK_TANK_LECK
+0xFA82	OKAY
+0xFA8D	Zurück
+0xFA9A	Exit
+0xFAA0	Steuern TEV
+0xFAB0	Test-Start
+0xFABE	START_SYSTEMCHECK_TEV_FUNC
+0xFADC	OKAY
+0xFAE7	Test-Stop
+0xFAF4	DIAGNOSE_ENDE
+0xFB07	OKAY
+0xFB17	TEV zu
+0xFB22	STEUERN_TEV
+0xFB32	Steuern TEV mit 2 %
+0xFB4A	TEV auf 20%
+0xFB5A	STEUERN_TEV
+0xFB67	20
+0xFB6B	Steuern TEV mit 20 %
+0xFB84	TEV auf 99%
+0xFB94	STEUERN_TEV
+0xFBA1	99
+0xFBA5	Steuern TEV mit 99 %
+0xFBCD	Druck
+0xFBD7	Zurück
+0xFBE2	DIAGNOSE_ENDE
+0xFBF5	OKAY
+0xFC04	Exit
+0xFC0A	DIAGNOSE_ENDE
+0xFC1D	OKAY
+0xFC27	Steuern SLP SLV
+0xFC3B	Test-Start
+0xFC47	START_SYSTEMCHECK_SEK_LUFT
+0xFC65	OKAY
+0xFC72	Test-Stop
+0xFC7D	STOP_SYSTEMCHECK_SEK_LUFT
+0xFC9C	OKAY
+0xFCC2	SLP Ein 
+0xFCCC	STEUERN_SEK_PUMPE
+0xFCE2	Sekundärluftpumpe Ein 
+0xFCFD	SLV Ein 
+0xFD07	STEUERN_SEK_VENTIL
+0xFD1E	Sekundärluftventil Ein 
+0xFD3A	SLP Aus 
+0xFD44	STEUERN_SEK_PUMPE
+0xFD5A	Sekundärluftpumpe Aus 
+0xFD75	SLV Aus 
+0xFD7F	STEUERN_SEK_VENTIL
+0xFD96	Sekundärluftventil Aus 
+0xFDB2	Druck
+0xFDBC	Zurück
+0xFDC7	STOP_SYSTEMCHECK_SEK_LUFT
+0xFDE6	OKAY
+0xFDF5	Exit
+0xFDFB	STOP_SYSTEMCHECK_SEK_LUFT
+0xFE1A	OKAY
+0xFE24	Adaption löschen
+0xFE54	< F1 >  Adaption Laufunruhe löschen
+0xFE85	< F2 >  Adaption Schliesszeit löschen
+0xFEB8	< F3 >  Adaption LM Höhenkorrektur löschen
+0xFEF0	< F4 >  Adaption Drosselklappe löschen
+0xFF24	< F5 >  Adaption Lambda löschen
+0xFF51	< F6 >  Adaption Leerlauffüllungssteller löschen
+0xFF8F	< F7 >  Adaption Klopfregelung löschen
+0xFFC3	< F8 >  Adaption Varianten löschen
+0xFFF3	< F9 >  Bildschirmdruck
+0x10018	< F10>  Zurück
+0x10034	<Shift> + < F10>  Exit
+0x10058	Steuern
+0x1007F	< F1 >  Steuern  EV, SLP
+0x100A5	< F2 >  Steuern  LL-Steller,EKP ...
+0x100D6	< F3 >  Systemtest DK         
+0x10102	< F4 >  Systemtest VANOS
+0x10128	< F5 >  Systemtest LDP
+0x1014C	< F9 >  Bildschirmdruck
+0x10171	< F10>  Zurück
+0x1018D	<Shift> + < F10>  Exit
+0x101B1	Steuern 1
+0x101DA	< F1 >  Einspritzventil Zylinder 1
+0x1020A	< F2 >  Einspritzventil Zylinder 2
+0x1023A	< F3 >  Einspritzventil Zylinder 3
+0x1026A	< F4 >  Einspritzventil Zylinder 4
+0x1029A	< F5 >  Einspritzventil Zylinder 5
+0x102CA	< F6 >  Einspritzventil Zylinder 6
+0x102FA	< F9 >  Ansteuerung beenden
+0x10323	< F10>  Zurück
+0x1033F	<Shift> + < F10> Exit
+0x10362	Steuern 2
+0x1038B	< F1 >  Relais Klimakompressor
+0x103B7	< F2 >  Relais Kraftstoffpumpe
+0x103E3	< F3 > Leerlaufsteller
+0x10407	< F5 >  Abgasklappe
+0x10428	< F6 >  DISA
+0x10442	< F8 >  MIL
+0x1045B	< F9 >  Ansteuerung beenden
+0x10484	< F10>  Zurück
+0x104A0	<Shift> + < F10> Exit
+0x104C3	Steuern 3 
+0x104ED	< F1 >  Anhebung LL-Drehzahl
+0x10517	< F2 >  Kennfeld-Thermostat
+0x10540	< F3 >  E-Lüfter
+0x1055E	< F4 >  Temperatur Kombi
+0x10584	< F5 >  Lambdasonden Systemtest
+0x105B1	< F6 >  MDK - Winkel
+0x105D3	< F10>  Zurück
+0x105EF	<Shift> + < F9 >  Ansteuerung beenden
+0x10622	<Shift> + < F10> Exit
+0x10645	Steuern 4 
+0x1066F	< F1 >  VANOS E Ventil ansteuern
+0x1069D	< F2 >  VANOS A Ventil ansteuern
+0x106CB	< F3 >  VANOS E Sollwert vorgeben
+0x106FA	< F4 >  VANOS A Sollwert vorgeben
+0x10729	< F5 >  VANOS E Dichtheit prüfen
+0x10757	< F6 >  VANOS A Dichtheit prüfen
+0x10785	< F7 >  VANOS E Verstellzeitmessung
+0x107B6	< F8 >  VANOS A Verstellzeitmessung
+0x107E7	< F9 >  Bildschirmdruck
+0x1080C	< F10>  Zurück
+0x10828	<Shift> + < F9 >  Ansteuerung beenden
+0x1085B	<Shift> + < F10> Exit
+0x1087E	Steuern 5 / Systemtest 
+0x108B5	< F1 >  Systemtest Tankleckdiagnose
+0x108E6	< F2 >  Systemtest Tankentlüftungsventil
+0x1091C	< F3 >  Systemtest Sekundaerluftpumpe/-ventil
+0x10957	< F9 >  Bildschirmdruck
+0x1097C	< F10>  Zurück
+0x10998	<Shift> + < F10> Exit
+0x109BB	LL-Drehzahl verstellen 
+0x109F8	Motordrehzahl
+0x10A0D	[1/min]
+0x10A16	STATUS_MOTORDREHZAHL
+0x10A30	OKAY
+0x10A36	STAT_MOTORDREHZAHL_WERT
+0x10A63	p·@
+0x10A75	p·@
+0x10A79	Temperatur KF-Thermostat verstellen 
+0x10AB9	Kühlwassertemperatur, Kühlwasseraustrittstemperatur
+0x10AF6	Kühlwassertemperatur
+0x10B12	[°C]
+0x10B18	STATUS_MOTORTEMPERATUR
+0x10B34	OKAY
+0x10B3A	STAT_MOTORTEMPERATUR_WERT
+0x10B61	D@
+0x10B6A	^@
+0x10B73	D@
+0x10B7C	^@
+0x10B7F	Drehzahl E-Luefter verstellen 
+0x10BC4	Drehzahl E-Luefter
+0x10BDE	[%]
+0x10BF8	Y@
+0x10C0A	Y@
+0x10C0D	4.0
+0x10C12	Temperaturanzeige Kombi verstellen 
+0x10C5C	Temperaturanzeige Kombi
+0x10C7B	[%]
+0x10C8C	D@
+0x10C95	^@
+0x10C9E	D@
+0x10CA7	^@
+0x10CAA	4.0
+0x10CAF	TV Lambdasonden-Heizung verstellen 
+0x10CEE	TV Sondenheizung Vorkat Bank 1, Vorkat Bank 2
+0x10D25	TV Sondenheizung Vorkat Bank 1
+0x10D4B	[%]
+0x10D50	STATUS_LS_VKAT_HEIZUNG_TV_1
+0x10D71	OKAY
+0x10D77	STAT_LS_VKAT_HEIZUNG_TV_1_WERT
+0x10DAC	Y@
+0x10DBE	Y@
+0x10DC7	TV Sondenheizung Vorkat Bank 2
+0x10DED	[%]
+0x10DF2	STATUS_LS_VKAT_HEIZUNG_TV_2
+0x10E13	OKAY
+0x10E19	STAT_LS_VKAT_HEIZUNG_TV_2_WERT
+0x10E4E	Y@
+0x10E60	Y@
+0x10E63	TV Sondenheizung Nachkat Bank 1, Nachkat Bank 2
+0x10E9C	TV Sondenheizung Nachkat Bank 1
+0x10EC3	[%]
+0x10EC8	STATUS_LS_NKAT_HEIZUNG_TV_1
+0x10EE9	OKAY
+0x10EEF	STAT_LS_NKAT_HEIZUNG_TV_1_WERT
+0x10F24	Y@
+0x10F36	Y@
+0x10F3F	TV Sondenheizung Nachkat Bank 2
+0x10F66	[%]
+0x10F6B	STATUS_LS_NKAT_HEIZUNG_TV_2
+0x10F8C	OKAY
+0x10F92	STAT_LS_NKAT_HEIZUNG_TV_2_WERT
+0x10FC7	Y@
+0x10FD9	Y@
+0x10FDC	Lambdasonden Systemtest 
+0x1101A	LS-Spannung Min Wert Bank 1
+0x1103D	[V]
+0x11042	STATUS_SYSTEMCHECK_SONDENHEIZUNG
+0x11068	OKAY
+0x1106E	STAT_SYSTEMCHECK_SONDENHEIZUNG_ULS_MIN_BANK1_WERT
+0x110B6	ñ?
+0x110C8	ñ?
+0x110D1	LS-Spannung Max Wert Bank 1
+0x110F4	[V]
+0x110F9	STAT_SYSTEMCHECK_SONDENHEIZUNG_ULS_MAX_BANK1_WERT
+0x11141	ñ?
+0x11153	ñ?
+0x1115C	LS-Spannung Min Wert Bank 2
+0x1117F	[V]
+0x11184	STAT_SYSTEMCHECK_SONDENHEIZUNG_ULS_MIN_BANK2_WERT
+0x111CC	ñ?
+0x111DE	ñ?
+0x111E7	LS-Spannung Max Wert Bank 2
+0x1120A	[V]
+0x1120F	STAT_SYSTEMCHECK_SONDENHEIZUNG_ULS_MAX_BANK2_WERT
+0x11257	ñ?
+0x11269	ñ?
+0x11272	Sondenwiderstand VKAT Sonde 1
+0x11297	[Ohm]
+0x1129E	STAT_SYSTEMCHECK_SONDENHEIZUNG_R_VKAT_BANK1_WERT
+0x112E5	4@
+0x112F7	4@
+0x11300	Sondenwiderstand VKAT Sonde 2
+0x11325	[Ohm]
+0x1132C	STAT_SYSTEMCHECK_SONDENHEIZUNG_R_VKAT_BANK2_WERT
+0x11373	4@
+0x11385	4@
+0x1138E	Sondenwiderstand NKAT Sonde 1
+0x113B3	[Ohm]
+0x113BA	STAT_SYSTEMCHECK_SONDENHEIZUNG_R_NKAT_BANK1_WERT
+0x11401	4@
+0x11413	4@
+0x1141C	Sondenwiderstand NKAT Sonde 2
+0x11441	[Ohm]
+0x11448	STAT_SYSTEMCHECK_SONDENHEIZUNG_R_NKAT_BANK2_WERT
+0x1148F	4@
+0x114A1	4@
+0x114B0	Sekundärluftpumpe und Sekundärluftventil Systemtest 
+0x11500	STATUS_DIGITAL
+0x11512	OKAY
+0x1151E	Tankentlueftungsventil
+0x11536	STAT_SLP_EIN
+0x1154A	 EIN    
+0x11554	 AUS  
+0x1155C	STATUS_DIGITAL
+0x1156E	OKAY
+0x1157A	Sekundärluftventil
+0x1158E	STAT_SLV_EIN
+0x115A2	 EIN    
+0x115AC	 AUS  
+0x115D1	Laufzeit SLP/SLV-SYSTEMCHECK 
+0x11605	N@
+0x11617	N@
+0x1161A	3.0
+0x11625	[s]
+0x11630	Laufzeit Vorgabe = 45 [s] 
+0x11656	Sekundärluftsystemtest
+0x1166E	LESEN_SYSTEMCHECK_SEK_LUFT
+0x1168E	OKAY
+0x1169A	===     Status Systemcheck Wert     ===
+0x116C3	LESEN_SYSTEMCHECK_SEK_LUFT_STATUS
+0x11705	Info: Ergebnis 6 ist Sollwert!
+0x11725	< F7 >  Sekundärluftpumpe Ein
+0x11750	< F8 >  Sekundärluftventil Ein
+0x1177C	<Shift>< F7 >  Sekundärluftpumpe Ein
+0x117AE	<Shift>< F8 >  Sekundärluftventil Ein
+0x117ED	Systemtest Tankleckdiagnose DMTL
+0x11843	Laufzeit DMTL
+0x11867	v@
+0x11879	v@
+0x1187C	3.0
+0x11887	[s]
+0x11890	STATUS_SYSTEMCHECK_DMTL
+0x118AD	OKAY
+0x118B9	Strom bei Referenzleckmessung
+0x118D8	STAT_SYSTEMCHECK_REF_STROM_DMTL_WERT
+0x11916	D@
+0x1191F	.@
+0x11928	A@
+0x1192B	3.2
+0x11930	STAT_SYSTEMCHECK_REF_STROM_DMTL_EINH
+0x1196D	Strom bei Grobleckmessung
+0x11988	STAT_SYSTEMCHECK_GROB_STROM_DMTL_WERT
+0x119C7	D@
+0x119D0	.@
+0x119D9	A@
+0x119DC	3.2
+0x119E1	STAT_SYSTEMCHECK_GROB_STROM_DMTL_EINH
+0x11A1F	Strom bei laufender Messung
+0x11A3C	STAT_SYSTEMCHECK_STROM_DMTL_WERT
+0x11A66	Àb@
+0x11A88	D@
+0x11A91	.@
+0x11A9A	A@
+0x11A9D	3.2
+0x11AA2	STAT_SYSTEMCHECK_STROM_DMTL_EINH
+0x11ADB	===     Status Systemcheck     ===
+0x11AFF	STAT_SYSTEMCHECK_STATE_DMTL_TEXT
+0x11B2C	STAT_SYSTEMCHECK_STATE_DMTL
+0x11B52	STATUS_DMTL_EOL
+0x11B67	OKAY
+0x11B73	===     Messergebnis     ===
+0x11B91	STAT_SYSTEMCHECK_STATE_DMTL_TEXT
+0x11BBE	STAT_DMTL_EOL_WERT
+0x11BE7	Tankentlueftung Systemtest 
+0x11C1E	STATUS_DIGITAL
+0x11C30	OKAY
+0x11C3C	Tankentlueftungsventil
+0x11C54	STAT_TEV_EIN
+0x11C68	 EIN    
+0x11C72	 AUS  
+0x11C97	Laufzeit TEV-SYSTEMCHECK 
+0x11CC7	D@
+0x11CD9	D@
+0x11CDC	3.0
+0x11CE7	[s]
+0x11CF2	Laufzeit Vorgabe = 40 [s] 
+0x11D12	LESEN_SYSTEMCHECK_TEV_FUNC
+0x11D32	OKAY
+0x11D3E	===     Status Systemcheck Wert     ===
+0x11D67	LESEN_SYSTEMCHECK_TEV_WERT
+0x11DA2	Info: Ergebnis 6 ist Sollwert!
+0x11DC2	MDK DK-Winkel verstellen 
+0x11DF7	MDK Winkel
+0x11E0B	DKP-Winkel
+0x11E1D	[°DK]
+0x11E24	STATUS_DKP_WINKEL
+0x11E3B	OKAY
+0x11E41	STAT_DKP_WINKEL_WERT
+0x11E6C	^@
+0x11E7E	^@
+0x11E81	MDK Poti 1 , Poti 2
+0x11E9E	MDK-Spannung Poti 1
+0x11EB9	[V]
+0x11EBE	STATUS_MDK_POTI_SPANNUNG
+0x11EDC	OKAY
+0x11EE2	STAT_MDK_POTI_SPANNUNG_1_WERT
+0x11F31	MDK-Spannung Poti 2
+0x11F4C	[V]
+0x11F51	STAT_MDK_POTI_SPANNUNG_2_WERT
+0x11F9A	VANOS Einlass verstellen 
+0x11FCF	NW Istlage-Einlass ,Solllage-Einlass
+0x11FF7	STATUS_VANOS_NW_LAGE_EINLASS
+0x12019	OKAY
+0x12025	NW Istlage-Einlass
+0x1203F	[Grad KW]
+0x1204A	STAT_VANOS_NW_LAGE_EINLASS_IST_WERT
+0x1207B	I@
+0x12083	@`@
+0x1208D	I@
+0x12095	@`@
+0x1209F	NW Solllage-Einlass
+0x120BA	[Grad KW]
+0x120C5	STAT_VANOS_NW_LAGE_EINLASS_SOLL_WERT
+0x120F7	I@
+0x120FF	@`@
+0x12109	I@
+0x12111	@`@
+0x12115	NW Istlage-Auslass ,Solllage-Auslass
+0x1213D	STATUS_VANOS_NW_LAGE_AUSLASS
+0x1215F	OKAY
+0x1216B	NW Istlage-Auslass
+0x12185	[Grad KW]
+0x12190	STAT_VANOS_NW_LAGE_AUSLASS_IST_WERT
+0x121C0	@`@
+0x121CA	4@
+0x121D2	@`@
+0x121DC	4@
+0x121E5	NW Solllage-Auslass
+0x12200	[Grad KW]
+0x1220B	STAT_VANOS_NW_LAGE_AUSLASS_SOLL_WERT
+0x1223C	@`@
+0x12246	4@
+0x1224E	@`@
+0x12258	4@
+0x1225B	VANOS Dichtheitsprüfung VANOS Einlass 
+0x1229D	NW Istlage-Auslass ,Solllage-Auslass
+0x122C5	STATUS_DICHTHEIT_MESS_VANOS_E
+0x122E8	OKAY
+0x122F4	Dichtheit 
+0x12306	[ms]
+0x1230C	STAT_DICHTHEIT_MESS_VANOS_E_WERT
+0x12358	Status
+0x1237B	STAT_DICHTHEIT_MESS_VANOS_E_STAT
+0x123AC	VANOS Dichtheitsprüfung VANOS Auslass 
+0x123EE	NW Istlage-Auslass ,Solllage-Auslass
+0x12416	STATUS_DICHTHEIT_MESS_VANOS_A
+0x12439	OKAY
+0x12445	Dichtheit 
+0x12457	[ms]
+0x1245D	STAT_DICHTHEIT_MESS_VANOS_A_WERT
+0x124A9	Status
+0x124CC	STAT_DICHTHEIT_MESS_VANOS_A_STAT
+0x124FD	Verstellzeitmessung VANOS Einlass 
+0x1253B	NW Istlage-Auslass ,Solllage-Auslass
+0x12563	STATUS_VERSTELLZEIT_MESS_VANOS_E
+0x12589	OKAY
+0x12595	NW Verstellzeit Früh - > Spät
+0x125BA	[s]
+0x125BF	STAT_VERSTELLZEIT_MESS_VANOS_E_FR_WERT
+0x12617	NW Verstellzeit Spät - > Früh
+0x1263C	[s]
+0x12641	STAT_VERSTELLZEIT_MESS_VANOS_E_SP_WERT
+0x12693	Status
+0x126B6	STAT_VERSTELLZEIT_MESS_VANOS_E_STAT
+0x126EA	Verstellzeitmessung VANOS Auslass 
+0x12728	NW Istlage-Auslass ,Solllage-Auslass
+0x12750	STATUS_VERSTELLZEIT_MESS_VANOS_A
+0x12776	OKAY
+0x12782	NW Verstellzeit Früh - > Spät
+0x127A7	[s]
+0x127AC	STAT_VERSTELLZEIT_MESS_VANOS_A_FR_WERT
+0x12804	NW Verstellzeit Spät - > Früh
+0x12829	[s]
+0x1282E	STAT_VERSTELLZEIT_MESS_VANOS_A_SP_WERT
+0x12880	Status
+0x128A3	STAT_VERSTELLZEIT_MESS_VANOS_A_STAT
+0x128D7	Auswahl Digitalwerte
+0x1290B	< F1 >  Digital allgemein
+0x12932	< F2 >  FGR
+0x1294B	< F9 >  Bildschirmdruck
+0x12970	< F10>  Zurück
+0x1298C	<Shift> + < F10>  Exit
+0x129B0	Speicher lesen
+0x129DE	< F1 >  Linearen Speicher lesen
+0x12A0B	< F9 >  Bildschirmdruck
+0x12A30	< F10>  Zurück
+0x12A4C	<Shift> + < F10>  Exit
+0x12A70	ROM lesen
+0x12A95	SPEICHER_LIN_LESEN
+0x12AA9	0x
+0x12AB2	OKAY
+0x12AB8	JOB_STATUS
+0x12ACD	Startadresse
+0x12B02	Anzahl
+0x12B31	Daten
+0x12B53	OKAY
+0x12B65	SPEICHER_LIN_LESEN_WERT
+0x12B87	EWS - DME  Startwert-Synchronisation
+0x12BCB	STATUS_SYNC_MODE
+0x12BE1	OKAY
+0x12BE7	Aktueller Status DME-SG:
+0x12C0D	STATUS_SYNC_MODE_TEXT
+0x12C30	< F1 >  EWS-Startwert  uebertragen
+0x12C60	< F2 >  EWS-Startwert zurücksetzen
+0x12C90	< F10>  Zurück
+0x12CAC	<Shift> + < F10>  Exit
+0x12CD0	deutsch
+0x12CD9	???
+0x12CDE	 Version 
+0x12CE9	INITIALISIERUNG
+0x12CFE	VARIANTE
+0x12D0F	Variantenkontrolle
+0x12D23	. 
+0x12D27	Das Programm wird abgebrochen!
+0x12D47	Variantenkontrolle
+0x12D5B	Gesuchtes Steuergerät: '
+0x12D75	' nicht gefunden. 
+0x12D89	Gefundenes Steuergerät: '
+0x12DA4	'. 
+0x12DA9	Das Programm wird abgebrochen!
+0x12DC9	INFO
+0x12DD3	ECU
+0x12DDD	REVISION
+0x12DEC	ORIGIN
+0x12DF9	COMMENT
+0x12E07	SPRACHE
+0x12E21	Versionskontrolle
+0x12E34	Nicht zusammenpassende Versionen. 
+0x12E58	Fehlfunktion ist möglich!
+0x12E75	DIAGNOSE_ENDE
+0x12E88	OKAY

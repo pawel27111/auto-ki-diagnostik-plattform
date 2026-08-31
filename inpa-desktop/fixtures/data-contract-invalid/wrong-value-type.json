@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "source": "fixture:invalid-wrong-value-type",
+  "dataMode": "SYNTHETIC",
+  "vehicleProfile": "BMW_E46_320Ci_M54B22_MS43_OFFLINE",
+  "ecu": "MS430DS0",
+  "job": null,
+  "capturedAtUtc": "2026-01-01T00:35:00Z",
+  "durationMs": 0,
+  "values": [
+    {
+      "rawFieldName": "STAT_MOTORTEMPERATUR_WERT",
+      "normalizedName": "engine.coolantTemperature",
+      "value": "ninety-two",
+      "unit": "\u00b0C",
+      "validity": "synthetic",
+      "sourceJob": "STATUS_MOTORTEMPERATUR",
+      "mappingStatus": "mapped"
+    }
+  ],
+  "missingFields": [],
+  "errors": [],
+  "runtimeVerified": false
+}

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "source": "fixture:synthetic-contradictory",
+  "dataMode": "SYNTHETIC",
+  "vehicleProfile": "BMW_E46_320Ci_M54B22_MS43_OFFLINE",
+  "ecu": "MS430DS0",
+  "job": null,
+  "capturedAtUtc": "2026-01-01T00:20:00Z",
+  "durationMs": 0,
+  "values": [
+    {
+      "rawFieldName": "STAT_MOTORDREHZAHL_WERT",
+      "normalizedName": "engine.speed",
+      "value": 0,
+      "unit": "1/min",
+      "validity": "synthetic",
+      "sourceJob": "STATUS_MOTORDREHZAHL",
+      "mappingStatus": "mapped"
+    },
+    {
+      "rawFieldName": "STAT_GESCHWINDIGKEIT_WERT",
+      "normalizedName": "vehicle.speed",
+      "value": 80,
+      "unit": "km/h",
+      "validity": "synthetic",
+      "sourceJob": "STATUS_GESCHWINDIGKEIT",
+      "mappingStatus": "mapped"
+    },
+    {
+      "rawFieldName": "STAT_LMM_MASSE_WERT",
+      "normalizedName": "intake.airMass",
+      "value": 25,
+      "unit": "kg/h",
+      "validity": "synthetic",
+      "sourceJob": "STATUS_LMM_MASSE",
+      "mappingStatus": "mapped"
+    }
+  ],
+  "missingFields": [],
+  "errors": [
+    "SYNTHETIC_CONTRADICTION: engine.speed=0 while vehicle.speed=80 and intake.airMass=25"
+  ],
+  "runtimeVerified": false,
+  "fixture": {
+    "id": "synthetic-contradictory",
+    "label": "Widerspruechlicher Datensatz",
+    "disclaimer": "Kuenstliche und absichtlich widerspruechliche Testdaten."
+  }
+}

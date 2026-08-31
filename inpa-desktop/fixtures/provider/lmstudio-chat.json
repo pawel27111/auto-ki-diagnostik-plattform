@@ -1,0 +1,13 @@
+{
+  "id": "fixture-chat",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"summary\":\"Synthetischer lokaler Protokolltest.\",\"severity\":\"unknown\",\"observations\":[\"Der Test enthaelt keine echten Fahrzeugdaten.\"],\"possibleCauses\":[],\"nextChecks\":[\"Nur mit echten Messwerten weiterpruefen.\"],\"limitations\":[\"SYNTHETIC ist keine echte Fahrzeugdiagnose.\"]}"
+      },
+      "finish_reason": "stop"
+    }
+  ]
+}

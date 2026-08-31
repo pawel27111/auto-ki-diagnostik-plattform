@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0",
+  "source": "fixture:synthetic-fuel-trim-idle",
+  "dataMode": "SYNTHETIC",
+  "vehicleProfile": "BMW_E46_320Ci_M54B22_MS43_OFFLINE",
+  "ecu": "MS430DS0",
+  "job": null,
+  "capturedAtUtc": "2026-01-01T00:10:00Z",
+  "durationMs": 0,
+  "values": [
+    {
+      "rawFieldName": "STAT_MOTORDREHZAHL_WERT",
+      "normalizedName": "engine.speed",
+      "value": 720,
+      "unit": "1/min",
+      "validity": "synthetic",
+      "sourceJob": "STATUS_MOTORDREHZAHL",
+      "mappingStatus": "mapped"
+    },
+    {
+      "rawFieldName": "STAT_GESCHWINDIGKEIT_WERT",
+      "normalizedName": "vehicle.speed",
+      "value": 0,
+      "unit": "km/h",
+      "validity": "synthetic",
+      "sourceJob": "STATUS_GESCHWINDIGKEIT",
+      "mappingStatus": "mapped"
+    },
+    {
+      "rawFieldName": "STAT_LAMBDA_ADD_1_WERT",
+      "normalizedName": "mixture.bank1AdditiveAdaptation",
+      "value": 0.45,
+      "unit": "ms",
+      "validity": "synthetic",
+      "sourceJob": "STATUS_LAMBDA_ADD_1",
+      "mappingStatus": "mapped"
+    },
+    {
+      "rawFieldName": "STAT_LAMBDA_ADD_2_WERT",
+      "normalizedName": "mixture.bank2AdditiveAdaptation",
+      "value": 0.42,
+      "unit": "ms",
+      "validity": "synthetic",
+      "sourceJob": "STATUS_LAMBDA_ADD_2",
+      "mappingStatus": "mapped"
+    },
+    {
+      "rawFieldName": "STAT_LAMBDA_MUL_1_WERT",
+      "normalizedName": "mixture.bank1MultiplicativeAdaptationPercent",
+      "value": 0.1,
+      "unit": "%",
+      "validity": "synthetic",
+      "sourceJob": "STATUS_LAMBDA_MUL_1",
+      "mappingStatus": "mapped"
+    },
+    {
+      "rawFieldName": "STAT_LAMBDA_MUL_2_WERT",
+      "normalizedName": "mixture.bank2MultiplicativeAdaptationPercent",
+      "value": 0.0,
+      "unit": "%",
+      "validity": "synthetic",
+      "sourceJob": "STATUS_LAMBDA_MUL_2",
+      "mappingStatus": "mapped"
+    }
+  ],
+  "missingFields": [],
+  "errors": [],
+  "runtimeVerified": false,
+  "fixture": {
+    "id": "synthetic-fuel-trim-idle",
+    "label": "Positive Gemischkorrektur nur im Leerlauf",
+    "disclaimer": "Kuenstliche Testdaten. Keine Messwerte eines realen Fahrzeugs."
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "source": "fixture:synthetic-unknown-field",
+  "dataMode": "SYNTHETIC",
+  "vehicleProfile": "BMW_E46_320Ci_M54B22_MS43_OFFLINE",
+  "ecu": "MS430DS0",
+  "job": null,
+  "capturedAtUtc": "2026-01-01T00:25:00Z",
+  "durationMs": 0,
+  "values": [
+    {
+      "rawFieldName": "STAT_MOTORDREHZAHL_WERT",
+      "normalizedName": "engine.speed",
+      "value": 750,
+      "unit": "1/min",
+      "validity": "synthetic",
+      "sourceJob": "STATUS_MOTORDREHZAHL",
+      "mappingStatus": "mapped"
+    },
+    {
+      "rawFieldName": "STAT_UNBEKANNT_TEST_WERT",
+      "normalizedName": "STAT_UNBEKANNT_TEST_WERT",
+      "value": 123.45,
+      "unit": "fixture-unit",
+      "validity": "synthetic",
+      "sourceJob": "STATUS_MOTORDREHZAHL",
+      "mappingStatus": "unmapped"
+    }
+  ],
+  "missingFields": [],
+  "errors": [],
+  "runtimeVerified": false,
+  "fixture": {
+    "id": "synthetic-unknown-field",
+    "label": "Unbekanntes Ergebnisfeld",
+    "disclaimer": "Kuenstliche Testdaten mit absichtlich unbekanntem Feld."
+  }
+}

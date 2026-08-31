@@ -1,0 +1,48 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InpaAi.Bridge", "src\InpaAi.Bridge\InpaAi.Bridge.csproj", "{9E34ED72-60E1-4AE8-A079-1842B07A5F74}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InpaAi.Bridge.Tests", "tests\InpaAi.Bridge.Tests\InpaAi.Bridge.Tests.csproj", "{05669FB7-1CE0-4DB2-8868-5C1BDA085708}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InpaAi.Copilot", "src\InpaAi.Copilot\InpaAi.Copilot.csproj", "{E8CD1BF4-4633-487E-92D5-843F98CB4D06}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InpaAi.Copilot.Tests", "tests\InpaAi.Copilot.Tests\InpaAi.Copilot.Tests.csproj", "{FC8BA798-130B-4DD4-B289-EA1A755510E6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InpaAi.Copilot.UiSmoke", "tests\InpaAi.Copilot.UiSmoke\InpaAi.Copilot.UiSmoke.csproj", "{0E3D6C54-3B3B-46BB-B7D8-3B2466991C4E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InpaAi.Copilot.LiveSmoke", "tests\InpaAi.Copilot.LiveSmoke\InpaAi.Copilot.LiveSmoke.csproj", "{0C6C5F5F-3F62-4DFE-852A-01117FB9008F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9E34ED72-60E1-4AE8-A079-1842B07A5F74}.Debug|x86.ActiveCfg = Debug|x86
+		{9E34ED72-60E1-4AE8-A079-1842B07A5F74}.Debug|x86.Build.0 = Debug|x86
+		{9E34ED72-60E1-4AE8-A079-1842B07A5F74}.Release|x86.ActiveCfg = Release|x86
+		{9E34ED72-60E1-4AE8-A079-1842B07A5F74}.Release|x86.Build.0 = Release|x86
+		{05669FB7-1CE0-4DB2-8868-5C1BDA085708}.Debug|x86.ActiveCfg = Debug|x86
+		{05669FB7-1CE0-4DB2-8868-5C1BDA085708}.Debug|x86.Build.0 = Debug|x86
+		{05669FB7-1CE0-4DB2-8868-5C1BDA085708}.Release|x86.ActiveCfg = Release|x86
+		{05669FB7-1CE0-4DB2-8868-5C1BDA085708}.Release|x86.Build.0 = Release|x86
+		{E8CD1BF4-4633-487E-92D5-843F98CB4D06}.Debug|x86.ActiveCfg = Debug|x86
+		{E8CD1BF4-4633-487E-92D5-843F98CB4D06}.Debug|x86.Build.0 = Debug|x86
+		{E8CD1BF4-4633-487E-92D5-843F98CB4D06}.Release|x86.ActiveCfg = Release|x86
+		{E8CD1BF4-4633-487E-92D5-843F98CB4D06}.Release|x86.Build.0 = Release|x86
+		{FC8BA798-130B-4DD4-B289-EA1A755510E6}.Debug|x86.ActiveCfg = Debug|x86
+		{FC8BA798-130B-4DD4-B289-EA1A755510E6}.Debug|x86.Build.0 = Debug|x86
+		{FC8BA798-130B-4DD4-B289-EA1A755510E6}.Release|x86.ActiveCfg = Release|x86
+		{FC8BA798-130B-4DD4-B289-EA1A755510E6}.Release|x86.Build.0 = Release|x86
+		{0E3D6C54-3B3B-46BB-B7D8-3B2466991C4E}.Debug|x86.ActiveCfg = Debug|x86
+		{0E3D6C54-3B3B-46BB-B7D8-3B2466991C4E}.Debug|x86.Build.0 = Debug|x86
+		{0E3D6C54-3B3B-46BB-B7D8-3B2466991C4E}.Release|x86.ActiveCfg = Release|x86
+		{0E3D6C54-3B3B-46BB-B7D8-3B2466991C4E}.Release|x86.Build.0 = Release|x86
+		{0C6C5F5F-3F62-4DFE-852A-01117FB9008F}.Debug|x86.ActiveCfg = Debug|x86
+		{0C6C5F5F-3F62-4DFE-852A-01117FB9008F}.Debug|x86.Build.0 = Debug|x86
+		{0C6C5F5F-3F62-4DFE-852A-01117FB9008F}.Release|x86.ActiveCfg = Release|x86
+		{0C6C5F5F-3F62-4DFE-852A-01117FB9008F}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+EndGlobal

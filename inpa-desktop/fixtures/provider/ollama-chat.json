@@ -1,0 +1,8 @@
+{
+  "model": "fixture-ollama-model:latest",
+  "message": {
+    "role": "assistant",
+    "content": "{\"summary\":\"Synthetischer Test ohne Auffaelligkeit.\",\"severity\":\"info\",\"observations\":[\"Nur SYNTHETIC-Werte wurden ausgewertet.\"],\"possibleCauses\":[],\"nextChecks\":[\"Keine reale Diagnose aus diesen Testdaten ableiten.\"],\"limitations\":[\"Kuenstliche Testdaten sind keine echte Fahrzeugdiagnose.\"]}"
+  },
+  "done": true
+}

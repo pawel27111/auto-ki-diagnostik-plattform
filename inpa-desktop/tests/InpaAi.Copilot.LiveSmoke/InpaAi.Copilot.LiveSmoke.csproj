@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProjectGuid>{0C6C5F5F-3F62-4DFE-852A-01117FB9008F}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>InpaAi.Copilot.LiveSmoke</RootNamespace>
+    <AssemblyName>InpaAi.Copilot.LiveSmoke</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <PlatformTarget>x86</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="LiveSmokeProgram.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\InpaAi.Copilot\InpaAi.Copilot.csproj">
+      <Project>{E8CD1BF4-4633-487E-92D5-843F98CB4D06}</Project>
+      <Name>InpaAi.Copilot</Name>
+    </ProjectReference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

@@ -1,0 +1,11 @@
+{
+  "profileVersion": "1.0",
+  "profileState": "OFFLINE_ONLY",
+  "runtimeVerified": false,
+  "executionEnabled": true,
+  "sgbd": "MS430DS0",
+  "vehicleProfile": "BMW_E46_320Ci_M54B22_MS43_OFFLINE",
+  "sources": [],
+  "candidateJobs": [],
+  "catalog": []
+}

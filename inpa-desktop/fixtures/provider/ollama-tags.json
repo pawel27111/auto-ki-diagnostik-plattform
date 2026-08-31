@@ -1,0 +1,10 @@
+{
+  "models": [
+    {
+      "name": "fixture-ollama-model:latest"
+    },
+    {
+      "name": "fixture-ollama-small:1"
+    }
+  ]
+}

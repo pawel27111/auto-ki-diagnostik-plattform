@@ -1,0 +1,910 @@
+{
+  "profileVersion": "1.0",
+  "profileState": "OFFLINE_ONLY",
+  "runtimeVerified": false,
+  "executionEnabled": false,
+  "sgbd": "MS430DS0",
+  "vehicleProfile": "BMW_E46_320Ci_M54B22_MS43_OFFLINE",
+  "sources": [
+    {
+      "id": "ipo",
+      "path": "C:\\EC-APPS\\INPA\\SGDAT\\MS430.IPO",
+      "sha256": "2D38A88D25AC83DA6C4D155A92A3F95565EBCBE9BE2F33F7EBC96F0B101D4585",
+      "method": "static-cp1252-strings-with-offsets"
+    },
+    {
+      "id": "prg",
+      "path": "C:\\EDIABAS\\ECU\\ms430ds0.prg",
+      "sha256": "8C4714D638DE8E9D765A86EEC9746495883366D21126A454AB2EF28279E3A523",
+      "method": "bestinfo-7.3.0-job-inventory"
+    }
+  ],
+  "candidateJobs": [
+    "IDENT",
+    "STATUS_UBATT",
+    "STATUS_GESCHWINDIGKEIT",
+    "STATUS_MOTORDREHZAHL",
+    "STATUS_ZUENDWINKEL",
+    "STATUS_MOTORTEMPERATUR",
+    "STATUS_KUEHLW_AUSL_TEMPERATUR",
+    "STATUS_AN_LUFTTEMPERATUR",
+    "STATUS_OEL_TEMPERATUR",
+    "STATUS_LMM_MASSE",
+    "STATUS_EINSPRITZZEIT",
+    "STATUS_LL_INTEGRATOR",
+    "STATUS_LL_STELLER_TV",
+    "STATUS_KLOPF_ADC1",
+    "STATUS_KLOPF_ADC2",
+    "STATUS_PWG1_WINKEL",
+    "STATUS_PWG_POTI_SPANNUNG",
+    "STATUS_DKP_WINKEL",
+    "STATUS_MDK_POTI_SPANNUNG",
+    "STATUS_VANOS_NW_LAGE_IST_SOLL_REF_EINLASS",
+    "STATUS_VANOS_NW_LAGE_IST_SOLL_REF_AUSLASS",
+    "STATUS_VANOS_NW_FLANKENADAPTION",
+    "STATUS_L_SONDE",
+    "STATUS_L_SONDE_H",
+    "STATUS_L_SONDE_2",
+    "STATUS_L_SONDE_2_H",
+    "STATUS_LS_VKAT_HEIZUNG_TV_1",
+    "STATUS_LS_VKAT_HEIZUNG_TV_2",
+    "STATUS_LS_NKAT_HEIZUNG_TV_1",
+    "STATUS_LS_NKAT_HEIZUNG_TV_2",
+    "STATUS_INT",
+    "STATUS_INT_2",
+    "STATUS_LAMBDA_ADD_1",
+    "STATUS_LAMBDA_ADD_2",
+    "STATUS_LAMBDA_MUL_1",
+    "STATUS_LAMBDA_MUL_2"
+  ],
+  "catalog": [
+    {
+      "group": "Identifikation",
+      "sgbd": "MS430DS0",
+      "job": "IDENT",
+      "resultField": "ID_BMW_NR",
+      "normalizedName": "identification.bmwPartNumber",
+      "dataType": null,
+      "unit": null,
+      "source": {
+        "ipoOffsets": ["0xB35C", "0xB39D"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label: BMW Teilenummer. EDIABAS transport type is not statically proven."
+    },
+    {
+      "group": "Identifikation",
+      "sgbd": "MS430DS0",
+      "job": "IDENT",
+      "resultField": "ID_COD_INDEX",
+      "normalizedName": "identification.codingIndex",
+      "dataType": null,
+      "unit": null,
+      "source": {
+        "ipoOffsets": ["0xB35C", "0xB3DC"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label: Codierindex. EDIABAS transport type is not statically proven."
+    },
+    {
+      "group": "Identifikation",
+      "sgbd": "MS430DS0",
+      "job": "IDENT",
+      "resultField": "ID_HW_NR",
+      "normalizedName": "identification.hardwareNumber",
+      "dataType": null,
+      "unit": null,
+      "source": {
+        "ipoOffsets": ["0xB35C", "0xB41A"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label: HW - Nr. EDIABAS transport type is not statically proven."
+    },
+    {
+      "group": "Identifikation",
+      "sgbd": "MS430DS0",
+      "job": "IDENT",
+      "resultField": "ID_DIAG_INDEX",
+      "normalizedName": "identification.diagnosticIndex",
+      "dataType": null,
+      "unit": null,
+      "source": {
+        "ipoOffsets": ["0xB35C", "0xB45A"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label: Diagnoseindex. EDIABAS transport type is not statically proven."
+    },
+    {
+      "group": "Identifikation",
+      "sgbd": "MS430DS0",
+      "job": "IDENT",
+      "resultField": "ID_BUS_INDEX",
+      "normalizedName": "identification.busIndex",
+      "dataType": null,
+      "unit": null,
+      "source": {
+        "ipoOffsets": ["0xB35C", "0xB49A"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label: Busindex. EDIABAS transport type is not statically proven."
+    },
+    {
+      "group": "Identifikation",
+      "sgbd": "MS430DS0",
+      "job": "IDENT",
+      "resultField": "ID_DATUM_KW",
+      "normalizedName": "identification.productionWeek",
+      "dataType": null,
+      "unit": null,
+      "source": {
+        "ipoOffsets": ["0xB35C", "0xB504"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label: Herstelldatum KW. EDIABAS transport type is not statically proven."
+    },
+    {
+      "group": "Identifikation",
+      "sgbd": "MS430DS0",
+      "job": "IDENT",
+      "resultField": "ID_DATUM_JAHR",
+      "normalizedName": "identification.productionYear",
+      "dataType": null,
+      "unit": null,
+      "source": {
+        "ipoOffsets": ["0xB35C", "0xB522"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label: Herstelldatum Jahr. EDIABAS transport type is not statically proven."
+    },
+    {
+      "group": "Identifikation",
+      "sgbd": "MS430DS0",
+      "job": "IDENT",
+      "resultField": "ID_LIEF_NR",
+      "normalizedName": "identification.supplierNumber",
+      "dataType": null,
+      "unit": null,
+      "source": {
+        "ipoOffsets": ["0xB35C", "0xB570"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label: Lieferantennummer. EDIABAS transport type is not statically proven."
+    },
+    {
+      "group": "Identifikation",
+      "sgbd": "MS430DS0",
+      "job": "IDENT",
+      "resultField": "ID_SW_NR",
+      "normalizedName": "identification.softwareNumber",
+      "dataType": null,
+      "unit": null,
+      "source": {
+        "ipoOffsets": ["0xB35C", "0xB5B3"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label: Softwarenummer. EDIABAS transport type is not statically proven."
+    },
+    {
+      "group": "Identifikation",
+      "sgbd": "MS430DS0",
+      "job": "IDENT",
+      "resultField": "ID_AI_NR",
+      "normalizedName": "identification.changeIndex",
+      "dataType": null,
+      "unit": null,
+      "source": {
+        "ipoOffsets": ["0xB35C", "0xB5F4"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label: Aenderungsindex. EDIABAS transport type is not statically proven."
+    },
+    {
+      "group": "Identifikation",
+      "sgbd": "MS430DS0",
+      "job": "IDENT",
+      "resultField": "ID_PROD_NR",
+      "normalizedName": "identification.productionNumber",
+      "dataType": null,
+      "unit": null,
+      "source": {
+        "ipoOffsets": ["0xB35C", "0xB638"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label: Produktionsnummer. EDIABAS transport type is not statically proven."
+    },
+    {
+      "group": "Bordspannung",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_UBATT",
+      "resultField": "STAT_UBATT_WERT",
+      "normalizedName": "electrical.batteryVoltage",
+      "dataType": "numeric-display",
+      "unit": "Volt",
+      "source": {
+        "ipoOffsets": ["0xCB3C", "0xCB54"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Batteriespannung [Volt]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Fahrgeschwindigkeit",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_GESCHWINDIGKEIT",
+      "resultField": "STAT_GESCHWINDIGKEIT_WERT",
+      "normalizedName": "vehicle.speed",
+      "dataType": "numeric-display",
+      "unit": "km/h",
+      "source": {
+        "ipoOffsets": ["0xCBB4", "0xCBD6"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Geschwindigkeit [km/h]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Motordrehzahl",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_MOTORDREHZAHL",
+      "resultField": "STAT_MOTORDREHZAHL_WERT",
+      "normalizedName": "engine.speed",
+      "dataType": "numeric-display",
+      "unit": "1/min",
+      "source": {
+        "ipoOffsets": ["0xCC64", "0xCC84"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Motordrehzahl [1/min]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Kuehlmitteltemperatur",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_MOTORTEMPERATUR",
+      "resultField": "STAT_MOTORTEMPERATUR_WERT",
+      "normalizedName": "engine.coolantTemperature",
+      "dataType": "numeric-display",
+      "unit": "\u00b0C",
+      "source": {
+        "ipoOffsets": ["0xCDA4", "0xCDC6"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Kuehlwassertemperatur [degree C]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Luftmasse",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_LMM_MASSE",
+      "resultField": "STAT_LMM_MASSE_WERT",
+      "normalizedName": "intake.airMass",
+      "dataType": "numeric-display",
+      "unit": "kg/h",
+      "source": {
+        "ipoOffsets": ["0xD040", "0xD05C"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Gesamtluftbedarf HLM [kg/h]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Zuendung",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_ZUENDWINKEL",
+      "resultField": "STAT_ZUENDWINKEL_WERT",
+      "normalizedName": "engine.ignitionAngle",
+      "dataType": "numeric-display",
+      "unit": "\u00b0KW",
+      "source": {
+        "ipoOffsets": ["0xCCE6", "0xCD04"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Zuendwinkel [degree KW]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Kuehlmitteltemperatur",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_KUEHLW_AUSL_TEMPERATUR",
+      "resultField": "STAT_KUEHLW_AUSL_TEMPERATUR_WERT",
+      "normalizedName": "engine.coolantOutletTemperature",
+      "dataType": "numeric-display",
+      "unit": "\u00b0C",
+      "source": {
+        "ipoOffsets": ["0xCE3C", "0xCE65"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Kuehlwasseraustrittstemperatur [degree C]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Temperaturen",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_AN_LUFTTEMPERATUR",
+      "resultField": "STAT_AN_LUFTTEMPERATUR_WERT",
+      "normalizedName": "intake.airTemperature",
+      "dataType": "numeric-display",
+      "unit": "\u00b0C",
+      "source": {
+        "ipoOffsets": ["0xCEFF", "0xCF23"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Ansauglufttemperatur [degree C]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Temperaturen",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_OEL_TEMPERATUR",
+      "resultField": "STAT_OEL_TEMPERATUR_WERT",
+      "normalizedName": "engine.oilTemperature",
+      "dataType": "numeric-display",
+      "unit": "\u00b0C",
+      "source": {
+        "ipoOffsets": ["0xCF8A", "0xCFAB"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Oeltemperatur [degree C]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Einspritzung",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_EINSPRITZZEIT",
+      "resultField": "STAT_EINSPRITZZEIT_WERT",
+      "normalizedName": "fuel.injectionTime",
+      "dataType": "numeric-display",
+      "unit": "ms",
+      "source": {
+        "ipoOffsets": ["0xD0BC", "0xD0DC"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Einspritzzeit [ms]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Leerlauf",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_LL_INTEGRATOR",
+      "resultField": "STAT_LL_INTEGRATOR_WERT",
+      "normalizedName": "idle.controlIntegratorPercent",
+      "dataType": "numeric-display",
+      "unit": "%",
+      "source": {
+        "ipoOffsets": ["0xD16D", "0xD18D"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Leerlaufregler [%]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Leerlauf",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_LL_STELLER_TV",
+      "resultField": "STAT_LL_STELLER_TV_WERT",
+      "normalizedName": "idle.actuatorDutyCyclePercent",
+      "dataType": "numeric-display",
+      "unit": "%",
+      "source": {
+        "ipoOffsets": ["0xD1FC", "0xD21C"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Tastverhaeltnis LL-Steller [%]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Klopfsensoren",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_KLOPF_ADC1",
+      "resultField": "STAT_KLOPF_ADC1_WERT",
+      "normalizedName": "knock.sensor1Voltage",
+      "dataType": "numeric-display",
+      "unit": "V",
+      "source": {
+        "ipoOffsets": ["0xD29F", "0xD2BC"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Klopfsensor 1 [V]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Klopfsensoren",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_KLOPF_ADC2",
+      "resultField": "STAT_KLOPF_ADC2_WERT",
+      "normalizedName": "knock.sensor2Voltage",
+      "dataType": "numeric-display",
+      "unit": "V",
+      "source": {
+        "ipoOffsets": ["0xD31C", "0xD339"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Klopfsensor 2 [V]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Drosselklappe",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_PWG1_WINKEL",
+      "resultField": "STAT_PWG1_WINKEL_WERT",
+      "normalizedName": "throttle.pedalAngle",
+      "dataType": "numeric-display",
+      "unit": "\u00b0PWG",
+      "source": {
+        "ipoOffsets": ["0xD3F4", "0xD412"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: PWG-Winkel [degree PWG]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Drosselklappe",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_PWG_POTI_SPANNUNG",
+      "resultField": "STAT_PWG_POTI_SPANNUNG_1_WERT",
+      "normalizedName": "throttle.pedalSensor1Voltage",
+      "dataType": "numeric-display",
+      "unit": "V",
+      "source": {
+        "ipoOffsets": ["0xD490", "0xD4B4"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: PWG-Spannung Poti 1 [V]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Drosselklappe",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_PWG_POTI_SPANNUNG",
+      "resultField": "STAT_PWG_POTI_SPANNUNG_2_WERT",
+      "normalizedName": "throttle.pedalSensor2Voltage",
+      "dataType": "numeric-display",
+      "unit": "V",
+      "source": {
+        "ipoOffsets": ["0xD490", "0xD523"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: PWG-Spannung Poti 2 [V]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Drosselklappe",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_DKP_WINKEL",
+      "resultField": "STAT_DKP_WINKEL_WERT",
+      "normalizedName": "throttle.angle",
+      "dataType": "numeric-display",
+      "unit": "\u00b0DK",
+      "source": {
+        "ipoOffsets": ["0xD599", "0xD5B6"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: DKP-Winkel [degree DK]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Drosselklappe",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_MDK_POTI_SPANNUNG",
+      "resultField": "STAT_MDK_POTI_SPANNUNG_1_WERT",
+      "normalizedName": "throttle.motorSensor1Voltage",
+      "dataType": "numeric-display",
+      "unit": "V",
+      "source": {
+        "ipoOffsets": ["0xD633", "0xD657"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: MDK-Spannung Poti 1 [V]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Drosselklappe",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_MDK_POTI_SPANNUNG",
+      "resultField": "STAT_MDK_POTI_SPANNUNG_2_WERT",
+      "normalizedName": "throttle.motorSensor2Voltage",
+      "dataType": "numeric-display",
+      "unit": "V",
+      "source": {
+        "ipoOffsets": ["0xD633", "0xD6C6"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: MDK-Spannung Poti 2 [V]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "VANOS",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_VANOS_NW_LAGE_IST_SOLL_REF_EINLASS",
+      "resultField": "STAT_VANOS_NW_LAGE_EINLASS_IST_WERT",
+      "normalizedName": "vanos.intakeActualAngle",
+      "dataType": "numeric-display",
+      "unit": "Grad KW",
+      "source": {
+        "ipoOffsets": ["0xD758", "0xD7B8"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: NW Istlage-Einlass [Grad KW]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "VANOS",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_VANOS_NW_LAGE_IST_SOLL_REF_EINLASS",
+      "resultField": "STAT_VANOS_NW_LAGE_EINLASS_SOLL_WERT",
+      "normalizedName": "vanos.intakeTargetAngle",
+      "dataType": "numeric-display",
+      "unit": "Grad KW",
+      "source": {
+        "ipoOffsets": ["0xD758", "0xD833"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: NW Solllage-Einlass [Grad KW]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "VANOS",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_VANOS_NW_LAGE_IST_SOLL_REF_EINLASS",
+      "resultField": "STAT_VANOS_NW_LAGE_EINLASS_REF_WERT",
+      "normalizedName": "vanos.intakeReferenceAngle",
+      "dataType": "numeric-display",
+      "unit": "Grad KW",
+      "source": {
+        "ipoOffsets": ["0xD758", "0xD8AE"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: NW Reflage-Einlass [Grad KW]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "VANOS",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_VANOS_NW_LAGE_IST_SOLL_REF_AUSLASS",
+      "resultField": "STAT_VANOS_NW_LAGE_AUSLASS_IST_WERT",
+      "normalizedName": "vanos.exhaustActualAngle",
+      "dataType": "numeric-display",
+      "unit": "Grad KW",
+      "source": {
+        "ipoOffsets": ["0xD925", "0xD985"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: NW Istlage-Auslass [Grad KW]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "VANOS",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_VANOS_NW_LAGE_IST_SOLL_REF_AUSLASS",
+      "resultField": "STAT_VANOS_NW_LAGE_AUSLASS_SOLL_WERT",
+      "normalizedName": "vanos.exhaustTargetAngle",
+      "dataType": "numeric-display",
+      "unit": "Grad KW",
+      "source": {
+        "ipoOffsets": ["0xD925", "0xDA00"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: NW Solllage-Auslass [Grad KW]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "VANOS",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_VANOS_NW_LAGE_IST_SOLL_REF_AUSLASS",
+      "resultField": "STAT_VANOS_NW_LAGE_AUSLASS_REF_WERT",
+      "normalizedName": "vanos.exhaustReferenceAngle",
+      "dataType": "numeric-display",
+      "unit": "Grad KW",
+      "source": {
+        "ipoOffsets": ["0xD925", "0xDA7B"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: NW Reflage-Auslass [Grad KW]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "VANOS",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_VANOS_NW_FLANKENADAPTION",
+      "resultField": "STAT_VANOS_NW_FLANKENADAPTION_EINLASS_WERT",
+      "normalizedName": "vanos.intakeEdgeAdaptation",
+      "dataType": "numeric-display",
+      "unit": "Grad KW",
+      "source": {
+        "ipoOffsets": ["0xDAF6", "0xDB54"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: NW Flankenadaption-Einlass [Grad KW]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "VANOS",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_VANOS_NW_FLANKENADAPTION",
+      "resultField": "STAT_VANOS_NW_FLANKENADAPTION_AUSLASS_WERT",
+      "normalizedName": "vanos.exhaustEdgeAdaptation",
+      "dataType": "numeric-display",
+      "unit": "Grad KW",
+      "source": {
+        "ipoOffsets": ["0xDAF6", "0xDBDD"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: NW Flankenadaption-Auslass [Grad KW]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Lambda/Gemischadaption",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_L_SONDE",
+      "resultField": "STAT_L_SONDE_WERT",
+      "normalizedName": "lambda.bank1PreCatalystVoltage",
+      "dataType": "numeric-display",
+      "unit": "V",
+      "source": {
+        "ipoOffsets": ["0xDF3E", "0xDF58"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Lambdasonde vor Kat. Bank 1 [V]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Lambda/Gemischadaption",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_L_SONDE_H",
+      "resultField": "STAT_L_SONDE_H_WERT",
+      "normalizedName": "lambda.bank1PostCatalystVoltage",
+      "dataType": "numeric-display",
+      "unit": "V",
+      "source": {
+        "ipoOffsets": ["0xDFCE", "0xDFEA"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Lambdasonde hinter Kat. Bank 1 [V]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Lambda/Gemischadaption",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_L_SONDE_2",
+      "resultField": "STAT_L_SONDE_2_WERT",
+      "normalizedName": "lambda.bank2PreCatalystVoltage",
+      "dataType": "numeric-display",
+      "unit": "V",
+      "source": {
+        "ipoOffsets": ["0xE078", "0xE094"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Lambdasonde vor Kat. Bank 2 [V]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Lambda/Gemischadaption",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_L_SONDE_2_H",
+      "resultField": "STAT_L_SONDE_2_H_WERT",
+      "normalizedName": "lambda.bank2PostCatalystVoltage",
+      "dataType": "numeric-display",
+      "unit": "V",
+      "source": {
+        "ipoOffsets": ["0xE10C", "0xE12A"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Lambdasonde hinter Kat. Bank 2 [V]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Lambda/Gemischadaption",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_LS_VKAT_HEIZUNG_TV_1",
+      "resultField": "STAT_LS_VKAT_HEIZUNG_TV_1_WERT",
+      "normalizedName": "lambda.bank1PreCatalystHeaterDutyCyclePercent",
+      "dataType": "numeric-display",
+      "unit": "%",
+      "source": {
+        "ipoOffsets": ["0xE1D5", "0xE1FC"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: TV Sondenheizung Vorkat Bank 1 [%]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Lambda/Gemischadaption",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_LS_VKAT_HEIZUNG_TV_2",
+      "resultField": "STAT_LS_VKAT_HEIZUNG_TV_2_WERT",
+      "normalizedName": "lambda.bank2PreCatalystHeaterDutyCyclePercent",
+      "dataType": "numeric-display",
+      "unit": "%",
+      "source": {
+        "ipoOffsets": ["0xE277", "0xE29E"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: TV Sondenheizung Vorkat Bank 2 [%]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Lambda/Gemischadaption",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_LS_NKAT_HEIZUNG_TV_1",
+      "resultField": "STAT_LS_NKAT_HEIZUNG_TV_1_WERT",
+      "normalizedName": "lambda.bank1PostCatalystHeaterDutyCyclePercent",
+      "dataType": "numeric-display",
+      "unit": "%",
+      "source": {
+        "ipoOffsets": ["0xE34D", "0xE374"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: TV Sondenheizung Nachkat Bank 1 [%]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Lambda/Gemischadaption",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_LS_NKAT_HEIZUNG_TV_2",
+      "resultField": "STAT_LS_NKAT_HEIZUNG_TV_2_WERT",
+      "normalizedName": "lambda.bank2PostCatalystHeaterDutyCyclePercent",
+      "dataType": "numeric-display",
+      "unit": "%",
+      "source": {
+        "ipoOffsets": ["0xE3F0", "0xE417"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: TV Sondenheizung Nachkat Bank 2 [%]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Lambda/Gemischadaption",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_INT",
+      "resultField": "STAT_INT_WERT",
+      "normalizedName": "mixture.bank1IntegratorPercent",
+      "dataType": "numeric-display",
+      "unit": "%",
+      "source": {
+        "ipoOffsets": ["0xE4DB", "0xE4F1"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Lambdaintegrator 1 [%]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Lambda/Gemischadaption",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_INT_2",
+      "resultField": "STAT_INT_2_WERT",
+      "normalizedName": "mixture.bank2IntegratorPercent",
+      "dataType": "numeric-display",
+      "unit": "%",
+      "source": {
+        "ipoOffsets": ["0xE54F", "0xE567"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Lambdaintegrator 2 [%]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Lambda/Gemischadaption",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_LAMBDA_ADD_1",
+      "resultField": "STAT_LAMBDA_ADD_1_WERT",
+      "normalizedName": "mixture.bank1AdditiveAdaptation",
+      "dataType": "numeric-display",
+      "unit": "ms",
+      "source": {
+        "ipoOffsets": ["0xE601", "0xE620"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Adaptionswert Additiv 1 [ms]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Lambda/Gemischadaption",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_LAMBDA_ADD_2",
+      "resultField": "STAT_LAMBDA_ADD_2_WERT",
+      "normalizedName": "mixture.bank2AdditiveAdaptation",
+      "dataType": "numeric-display",
+      "unit": "ms",
+      "source": {
+        "ipoOffsets": ["0xE68D", "0xE6AC"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Adaptionswert Additiv 2 [ms]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Lambda/Gemischadaption",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_LAMBDA_MUL_1",
+      "resultField": "STAT_LAMBDA_MUL_1_WERT",
+      "normalizedName": "mixture.bank1MultiplicativeAdaptationPercent",
+      "dataType": "numeric-display",
+      "unit": "%",
+      "source": {
+        "ipoOffsets": ["0xE75E", "0xE77D"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Adaptionswert Multiplikativ 1 [%]. EDIABAS transport type and scaling remain unverified."
+    },
+    {
+      "group": "Lambda/Gemischadaption",
+      "sgbd": "MS430DS0",
+      "job": "STATUS_LAMBDA_MUL_2",
+      "resultField": "STAT_LAMBDA_MUL_2_WERT",
+      "normalizedName": "mixture.bank2MultiplicativeAdaptationPercent",
+      "dataType": "numeric-display",
+      "unit": "%",
+      "source": {
+        "ipoOffsets": ["0xE7EF", "0xE80E"],
+        "prgJobInventory": "docs/ms43-prg-jobs.txt"
+      },
+      "verificationStatus": ["static-confirmed", "runtime-unverified"],
+      "readOnlyCandidate": true,
+      "notes": "IPO label/unit: Adaptionswert Multiplikativ 2 [%]. EDIABAS transport type and scaling remain unverified."
+    }
+  ]
+}
