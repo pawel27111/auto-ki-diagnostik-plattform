@@ -64,22 +64,89 @@ Für einen Server ohne TLS (z. B. im Werkstatt-LAN) ist Cleartext-Traffic in
 `network_security_config.xml` erlaubt — für öffentlich erreichbare
 Deployments sollte HTTPS verwendet werden.
 
-## OBD-Adapter koppeln
+## OBD-Adapter anschließen
 
-1. ELM327- oder D-CAN-Adapter in den Bluetooth-Einstellungen des Telefons
-   koppeln (PIN meist `1234` oder `0000`).
-2. In der App bei „Diagnose starten“ die Simulation deaktivieren, Gerät aus
-   der Liste der gekoppelten Geräte wählen.
+Anschluss und Adaptertyp werden getrennt gewählt, weil sie unabhängig
+voneinander sind — ein ELM327 verhält sich über Bluetooth und über USB
+gleich.
 
-Die App fragt nur `BLUETOOTH_CONNECT` an (auf Android ≤ 11 die Legacy-
+| | Bluetooth | USB |
+|---|---|---|
+| ELM327 (Protokoll automatisch) | ✓ | ✓ |
+| ELM327, fest auf CAN 500 kBit/s | ✓ | ✓ |
+| K+DCAN-Kabel (K-Line) | — | ✓ |
+
+**Bluetooth:** Adapter zuerst in den Bluetooth-Einstellungen des Geräts
+koppeln (PIN meist `1234` oder `0000`), dann in der App auswählen. Die App
+fragt nur `BLUETOOTH_CONNECT` an (auf Android ≤ 11 die Legacy-
 `BLUETOOTH`-Berechtigung) — es wird ausschließlich mit bereits gekoppelten
 Geräten verbunden, eine eigene Geräte-Suche (und damit die
 Standortberechtigung, die diese unter Android ≤ 11 erfordert) entfällt.
 
+**USB:** Kabel über einen OTG-Adapter anschließen und in der App „Neu
+suchen“ antippen. Android fragt einmal pro Gerät nach Erlaubnis. Erkannt
+werden FTDI, CH34x, CP21xx, Prolific und CDC-ACM.
+
+### Warum das K+DCAN-Kabel eine Sonderrolle hat
+
+Ein ELM327 ist ein Mikrocontroller: Er bekommt `ATSP0` und kümmert sich
+selbst um Protokollwahl, Nachrichtenrahmen und Timing. Ein BMW-K+DCAN-Kabel
+ist ein FTDI-Chip an einer Leitung, sonst nichts — alles, was der ELM327
+in Firmware erledigt, macht bei diesem Kabel die App:
+
+- Der Bus wird geweckt, indem die Sendeleitung mit **fünf Bit pro Sekunde**
+  angesteuert wird (`KLineAdapter.sendSlowInitAddress`). Kein gängiger
+  USB-Seriell-Chip lässt sich auf 5 Baud stellen — ein FT232R kommt nicht
+  unter 183 — also werden die Bits über den Break-Zustand erzeugt, je
+  200 ms. Der ganze Anschlag dauert zwei Sekunden.
+- Danach folgt der Schlüsselbyte-Handschlag, aus dem sich ergibt, ob das
+  Fahrzeug ISO 9141-2 oder KWP2000 spricht.
+- Nachrichtenrahmen und Prüfsummen entstehen in `:core` (`KLine.kt`) und
+  sind dort mit Testfällen abgedeckt, die von Hand aus der Norm gerechnet
+  sind — die zeitkritische Hälfte lässt sich ohne Fahrzeug nicht prüfen.
+
+Vier Einstellungen entscheiden darüber, ob das trägt; alle vier stammen aus
+[EdiabasLib](https://github.com/uholeschak/ediabaslib), der Referenz für
+diese Kabel, und ohne sie kam am Fahrzeug keine Verbindung zustande:
+
+- **DTR und RTS bleiben low.** Bei einem nackten Kabel hängen diese Pins am
+  K-Line-Treiber; auf High gehalten erreicht der Anschlag das Steuergerät
+  nicht.
+- **Latenz-Timer des FTDI auf 1 ms.** Ab Werk hält der Chip empfangene
+  Bytes 16 ms zurück — ein Sechstel des Fensters, das die Norm dem
+  Steuergerät zum Antworten lässt.
+- **Bit-Zeiten werden ausgewartet, nicht verschlafen.** 180 ms schlafen,
+  die letzten 20 ms aktiv abwarten: `Thread.sleep` kehrt unter Android bis
+  zu zehn Millisekunden zu spät zurück, und das summiert sich über zehn
+  Bits.
+- **Das eigene Echo wird übersprungen.** Die K-Line ist eine einzelne Ader,
+  also kommt der Anschlag zurück, und das Bit-Banging erzeugt im Empfänger
+  Rahmenfehler, die der FTDI als `00` meldet. Wer das erste Byte nach dem
+  Anschlag für die Antwort des Steuergeräts hält, hört sich selbst zu.
+
+Jeder Schritt protokolliert unter dem Tag `AutoKI-KLine` mit den rohen
+Bytes. Wenn der Anschlag scheitert, steht in `adb logcat` genau, wie weit
+er gekommen ist:
+
+```bash
+adb logcat -s AutoKI-KLine
+```
+
 ## Bekannte Einschränkungen
 
-- Nur Bluetooth Classic (SPP); USB-Seriell-Adapter werden bisher nicht
-  unterstützt (auf dem Server schon, über `serialport`).
+- Vom K-Line-Pfad sind am Fahrzeug bisher Anschlag, Handschlag und das
+  Lesen von Messwerten (Modus 01) bestätigt. Fehlerspeicher lesen und
+  löschen (Modus 03/04) laufen über dieselbe Rahmenlogik, sind aber noch
+  nicht an einem Auto durchlaufen.
+- Erprobt ist genau eine Kombination: Samsung-Tablet, BMW-K+DCAN-Kabel,
+  BMW E46 (2002). Das Timing des 5-Baud-Anschlags hängt am Scheduler des
+  Geräts und an der Pufferung des USB-Chips, also ist damit nicht gesagt,
+  dass jedes Tablet und jedes Kabel es schaffen.
+- Der K-Line-Pfad spricht OBD-II (Modus 01/03/04). BMW-eigene Protokolle
+  wie DS2, mit denen INPA auch ABS oder Airbag ausliest, sind nicht
+  implementiert.
+- Der Bluetooth-Pfad zu einem ELM327 ist nach wie vor nur kompiliert, nicht
+  an Hardware erprobt.
 - Das App-Icon ist ein einfaches Platzhalter-Vektordesign.
 - Es gibt noch keine automatisierten Instrumentation-/Compose-UI-Tests —
   die fachliche Logik (Protokoll-Dekodierung) ist über `:core:test`

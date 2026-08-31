@@ -85,6 +85,11 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
+    // USB-serial adapters (FTDI, CH34x, CP21xx, Prolific). Covers both an
+    // ELM327 on a USB plug and the BMW K+DCAN cable, which is an FTDI FT232R
+    // with no intelligence of its own.
+    implementation("com.github.mik3y:usb-serial-for-android:3.10.0")
+
     testImplementation(kotlin("test-junit5"))
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -40,13 +41,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.autoki.diagnostik.data.network.formatTimestamp
 import com.autoki.diagnostik.data.obd.BluetoothDevices
-import com.autoki.diagnostik.data.obd.ObdDeviceType
+import com.autoki.diagnostik.data.obd.ObdAdapterType
+import com.autoki.diagnostik.data.obd.ObdConnection
 import com.autoki.diagnostik.data.report.ReportCsv
 import com.autoki.diagnostik.ui.autoKiViewModel
 import com.autoki.diagnostik.ui.components.ParameterCard
@@ -108,6 +111,12 @@ private fun SetupContent(state: DiagnosticUiState.Setup, viewModel: DiagnosticVi
         }
     }
 
+    // USB needs no permission to enumerate — only to open — so the list can be
+    // filled as soon as hardware mode is chosen.
+    LaunchedEffect(state.useSimulation) {
+        if (!state.useSimulation) viewModel.refreshUsbDevices()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -144,54 +153,145 @@ private fun SetupContent(state: DiagnosticUiState.Setup, viewModel: DiagnosticVi
         if (!state.useSimulation) {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("OBD-Adapter (Bluetooth)", style = MaterialTheme.typography.labelLarge)
-                    if (!hasPermission) {
-                        Text("Bluetooth-Berechtigung erforderlich, um gekoppelte Geräte zu sehen.")
-                        Button(onClick = {
-                            BluetoothDevices.connectPermission()?.let { permissionLauncher.launch(it) }
-                                ?: run { hasPermission = true }
-                        }) {
-                            Text("Berechtigung erteilen")
-                        }
-                    } else if (state.pairedDevices.isEmpty()) {
-                        Text(
-                            "Kein gekoppeltes Gerät gefunden. Adapter zuerst in den " +
-                                "Bluetooth-Einstellungen des Telefons koppeln (PIN meist 1234 oder 0000).",
+
+                    Text("Anschluss", style = MaterialTheme.typography.labelLarge)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(
+                            selected = state.connection == ObdConnection.BLUETOOTH,
+                            onClick = { viewModel.selectConnection(ObdConnection.BLUETOOTH) },
+                            label = { Text("Bluetooth") },
                         )
-                    } else {
-                        state.pairedDevices.forEach { device ->
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                RadioButton(
-                                    selected = state.selectedDevice?.address == device.address,
-                                    onClick = { viewModel.updateSetup { it.copy(selectedDevice = device) } },
+                        FilterChip(
+                            selected = state.connection == ObdConnection.USB,
+                            onClick = { viewModel.selectConnection(ObdConnection.USB) },
+                            label = { Text("USB") },
+                        )
+                    }
+
+                    when (state.connection) {
+                        ObdConnection.BLUETOOTH -> {
+                            Text("Gekoppelte Geräte", style = MaterialTheme.typography.labelLarge)
+                            if (!hasPermission) {
+                                Text("Bluetooth-Berechtigung erforderlich, um gekoppelte Geräte zu sehen.")
+                                Button(onClick = {
+                                    BluetoothDevices.connectPermission()?.let { permissionLauncher.launch(it) }
+                                        ?: run { hasPermission = true }
+                                }) {
+                                    Text("Berechtigung erteilen")
+                                }
+                            } else if (state.pairedDevices.isEmpty()) {
+                                Text(
+                                    "Kein gekoppeltes Gerät gefunden. Adapter zuerst in den " +
+                                        "Bluetooth-Einstellungen des Geräts koppeln (PIN meist 1234 oder 0000).",
                                 )
-                                Column {
-                                    Text(device.name)
-                                    Text(device.address, style = MaterialTheme.typography.bodySmall)
+                            } else {
+                                state.pairedDevices.forEach { device ->
+                                    val chosen = state.selectedDevice?.address == device.address
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .selectable(
+                                                selected = chosen,
+                                                role = Role.RadioButton,
+                                                onClick = { viewModel.updateSetup { it.copy(selectedDevice = device) } },
+                                            ),
+                                    ) {
+                                        // The radio itself is not clickable: the whole row is,
+                                        // so the label counts as part of the target.
+                                        RadioButton(selected = chosen, onClick = null)
+                                        Column {
+                                            Text(device.name)
+                                            Text(device.address, style = MaterialTheme.typography.bodySmall)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        ObdConnection.USB -> {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text("Angeschlossene Kabel", style = MaterialTheme.typography.labelLarge)
+                                OutlinedButton(onClick = viewModel::refreshUsbDevices) { Text("Neu suchen") }
+                            }
+                            if (state.usbDevices.isEmpty()) {
+                                Text(
+                                    "Kein USB-Adapter erkannt. Kabel über einen OTG-Adapter anschließen " +
+                                        "und auf \u201eNeu suchen\u201c tippen. Android fragt beim Verbinden " +
+                                        "einmal nach der Erlaubnis für das Gerät.",
+                                )
+                            } else {
+                                state.usbDevices.forEach { device ->
+                                    val chosen = state.selectedUsbDevice?.deviceId == device.deviceId
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .selectable(
+                                                selected = chosen,
+                                                role = Role.RadioButton,
+                                                onClick = { viewModel.updateSetup { it.copy(selectedUsbDevice = device) } },
+                                            ),
+                                    ) {
+                                        RadioButton(selected = chosen, onClick = null)
+                                        Column {
+                                            Text(device.name)
+                                            Text(device.hardwareId, style = MaterialTheme.typography.bodySmall)
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Text("D-CAN-Adapter (BMW/Mercedes/Audi)")
-                        Switch(
-                            checked = state.deviceType == ObdDeviceType.DCAN,
-                            onCheckedChange = { checked ->
-                                viewModel.updateSetup {
-                                    it.copy(deviceType = if (checked) ObdDeviceType.DCAN else ObdDeviceType.ELM327)
+                    Text("Art des Adapters", style = MaterialTheme.typography.labelLarge)
+                    ObdAdapterType.entries.forEach { type ->
+                        // A bare K-Line cable needs the serial line driven directly,
+                        // which Bluetooth cannot do — so it is only offered on USB.
+                        val usable = !type.requiresLineControl || state.connection == ObdConnection.USB
+                        val chosen = state.adapterType == type
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .selectable(
+                                    selected = chosen,
+                                    enabled = usable,
+                                    role = Role.RadioButton,
+                                    onClick = { viewModel.selectAdapterType(type) },
+                                ),
+                        ) {
+                            RadioButton(selected = chosen, enabled = usable, onClick = null)
+                            Column {
+                                Text(type.label)
+                                if (!usable) {
+                                    Text(
+                                        "nur über USB",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.error,
+                                    )
                                 }
-                            },
-                        )
+                            }
+                        }
                     }
                 }
             }
+        }
+
+        // What is about to be used, spelled out. The adapter type sits below the
+        // device list and is easy to leave on the wrong value, which produces a
+        // failure several steps later that looks like a hardware problem.
+        if (!state.useSimulation) {
+            val plug = if (state.connection == ObdConnection.USB) "USB" else "Bluetooth"
+            Text(
+                "Verbindet über $plug als: ${state.adapterType.label}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary,
+            )
         }
 
         state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
@@ -251,7 +351,7 @@ private fun RunningContent(state: DiagnosticUiState.Running, viewModel: Diagnost
             // catalogue anyway, so there is nothing to virtualise.
             items(
                 state.readings.values.sortedBy { it.pid }.chunked(2),
-                key = { row -> row.first().pid },
+                key = { row -> "reading-${row.first().pid}" },
             ) { row ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -288,7 +388,7 @@ private fun RunningContent(state: DiagnosticUiState.Running, viewModel: Diagnost
             }
         }
 
-        items(state.dtcs, key = { it.id }) { dtc ->
+        items(state.dtcs, key = { "dtc-${it.id}" }) { dtc ->
             Card(Modifier.fillMaxWidth()) {
                 Row(
                     Modifier.fillMaxWidth().padding(12.dp),
@@ -345,7 +445,9 @@ private fun FinishedContent(
         }
 
         item { Text("Messwerte", style = MaterialTheme.typography.labelLarge) }
-        items(state.parameters, key = { it.id }) { parameter ->
+        // Same reason as the dashboard: parameters and error codes are separate
+        // tables, both numbered from 1, and they share this LazyColumn.
+        items(state.parameters, key = { "parameter-${it.id}" }) { parameter ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("${parameter.parameterName} (${parameter.parameterId})")
                 Text("${formatValue(parameter.value)} ${parameter.unit ?: ""}")
@@ -356,7 +458,7 @@ private fun FinishedContent(
         if (state.errorCodes.isEmpty()) {
             item { Text("Keine Fehlercodes gefunden.") }
         }
-        items(state.errorCodes, key = { it.id }) { code ->
+        items(state.errorCodes, key = { "errorCode-${it.id}" }) { code ->
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(12.dp)) {
                     Row(
