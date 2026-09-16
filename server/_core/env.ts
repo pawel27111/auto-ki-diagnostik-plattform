@@ -19,8 +19,25 @@ function parseInteger(value: string | undefined, fallback: number): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+/**
+ * Development login bypass.
+ *
+ * Sign-in normally goes through an external OAuth server, which a local
+ * checkout does not have credentials for — leaving no way to obtain a session
+ * and therefore no way to exercise the app at all. With this flag the login
+ * route issues a session for a fixed local user instead.
+ *
+ * It is refused outright in production (see {@link assertRequiredEnv}), and the
+ * route re-checks before acting, so enabling it by accident on a deployed
+ * instance fails the boot rather than silently opening a back door.
+ */
+const devAuthRequested = process.env.DEV_AUTH_ENABLED === "true";
+
+/** Stand-in client id, so the session JWT still carries a stable `appId`. */
+const DEV_APP_ID = "autoki-dev";
+
 export const ENV = {
-  appId: process.env.VITE_APP_ID ?? "",
+  appId: process.env.VITE_APP_ID || (devAuthRequested ? DEV_APP_ID : ""),
   cookieSecret: process.env.JWT_SECRET ?? "",
   databaseUrl: process.env.DATABASE_URL ?? "",
   oAuthServerUrl: process.env.OAUTH_SERVER_URL ?? "",
@@ -43,6 +60,14 @@ export const ENV = {
    */
   obdAllowedPorts: parseList(process.env.OBD_ALLOWED_PORTS),
 
+  /** See {@link devAuthRequested}. Never active in production. */
+  devAuth: {
+    enabled: devAuthRequested,
+    openId: process.env.DEV_AUTH_OPEN_ID || "dev-user",
+    name: process.env.DEV_AUTH_NAME || "Entwickler",
+    email: process.env.DEV_AUTH_EMAIL || "dev@localhost",
+  },
+
   llm: {
     provider: (process.env.LLM_PROVIDER ?? "auto") as
       | "openrouter"
@@ -57,8 +82,18 @@ export const ENV = {
   },
 } as const;
 
-/** Variables the server cannot run without, regardless of environment. */
-const REQUIRED_VARS: { key: string; value: string; hint: string }[] = [
+/**
+ * Variables the server cannot run without.
+ *
+ * The two OAuth values are only needed for the real sign-in flow, so they are
+ * waived when the development login is active — that is the whole point of it.
+ */
+const REQUIRED_VARS: {
+  key: string;
+  value: string;
+  hint: string;
+  waivedByDevAuth?: boolean;
+}[] = [
   {
     key: "JWT_SECRET",
     value: ENV.cookieSecret,
@@ -68,11 +103,13 @@ const REQUIRED_VARS: { key: string; value: string; hint: string }[] = [
     key: "VITE_APP_ID",
     value: ENV.appId,
     hint: "OAuth client id for this app",
+    waivedByDevAuth: true,
   },
   {
     key: "OAUTH_SERVER_URL",
     value: ENV.oAuthServerUrl,
     hint: "base URL of the OAuth server",
+    waivedByDevAuth: true,
   },
   {
     key: "DATABASE_URL",
@@ -90,8 +127,28 @@ const MIN_SECRET_LENGTH = 32;
 export function assertRequiredEnv(): void {
   const problems: string[] = [];
 
-  for (const { key, value, hint } of REQUIRED_VARS) {
-    if (!value) problems.push(`  ${key} is not set — ${hint}`);
+  // Checked first and fatally: a production instance that accepts an
+  // unauthenticated login is worse than one that refuses to start.
+  if (ENV.devAuth.enabled && ENV.isProduction) {
+    console.error(
+      "[Env] DEV_AUTH_ENABLED is set while NODE_ENV=production. The development\n" +
+        "      login grants a session to anyone who opens /api/oauth/login, so it\n" +
+        "      must never run in production. Refusing to start."
+    );
+    process.exit(1);
+  }
+
+  for (const { key, value, hint, waivedByDevAuth } of REQUIRED_VARS) {
+    if (value) continue;
+    if (waivedByDevAuth && ENV.devAuth.enabled) continue;
+    problems.push(`  ${key} is not set — ${hint}`);
+  }
+
+  if (ENV.devAuth.enabled) {
+    console.warn(
+      `[Env] Development login is ENABLED — /api/oauth/login signs in as ` +
+        `"${ENV.devAuth.openId}" without any credentials. For local testing only.`
+    );
   }
 
   if (ENV.cookieSecret && ENV.cookieSecret.length < MIN_SECRET_LENGTH) {

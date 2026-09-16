@@ -53,10 +53,15 @@ auto-ki-assistent/
 
 ## 🚀 Getting Started
 
+> **Server lokal auf dem eigenen Laptop betreiben?**
+> [SETUP-LOKAL.md](SETUP-LOKAL.md) führt Schritt für Schritt durch die
+> Einrichtung inklusive Datenbank, lokaler Anmeldung ohne OAuth-Server und der
+> Verbindung mit der Android-App auf einem Tablet.
+
 ### Voraussetzungen
 - Node.js 18+
 - pnpm 10+
-- MySQL 8.0+ (die Migrationen nutzen `REGEXP_REPLACE`)
+- MySQL 8.0+ (die Migrationen nutzen `REGEXP_REPLACE`); MariaDB ab 10.11 läuft ebenfalls
 
 ### Installation
 
@@ -69,7 +74,7 @@ cd auto-ki-assistent
 2. **Abhängigkeiten installieren**
 ```bash
 pnpm install
-# Für echte OBD-Hardware werden die nativen serialport-Bindings gebraucht.
+# Nur für einen OBD-Adapter per USB am Server: die nativen serialport-Bindings.
 # pnpm blockiert deren Build-Skript standardmäßig:
 pnpm approve-builds
 ```
@@ -77,8 +82,12 @@ pnpm approve-builds
 3. **Umgebungsvariablen konfigurieren**
 ```bash
 cp .env.example .env
-# JWT_SECRET, DATABASE_URL, VITE_APP_ID und OAUTH_SERVER_URL sind Pflicht.
+# JWT_SECRET und DATABASE_URL sind immer Pflicht, VITE_APP_ID und
+# OAUTH_SERVER_URL zusätzlich für die Anmeldung über den OAuth-Server.
 # Der Server bricht beim Start ab, wenn eines davon fehlt.
+#
+# Für einen lokalen Testlauf ohne OAuth-Server stattdessen DEV_AUTH_ENABLED=true
+# setzen — siehe SETUP-LOKAL.md.
 ```
 
 4. **Datenbank migrieren**
@@ -302,9 +311,15 @@ löscht alte Messwerte; ein Aufrufer dafür ist noch nicht eingerichtet.
 - [ ] Natürlichsprachliche Abfragen
 - [ ] EdiabasLib-Integration für herstellerspezifische Diagnose
 - [ ] Flotten-Management
-- [ ] Mobile App
 - [ ] Aufräumjob für alte Messwerte
 - [ ] Deployment-Pipeline
+
+## 📱 Android-App
+
+Natives Android-Projekt (Kotlin, Jetpack Compose) im [`android/`](android/)
+Verzeichnis — verbindet sich per Bluetooth direkt mit ELM327-/D-CAN-Adaptern
+und spricht mit demselben tRPC-Backend wie diese Web-Oberfläche. Details und
+Build-Anleitung: [android/README.md](android/README.md).
 
 ## 📝 Lizenz
 

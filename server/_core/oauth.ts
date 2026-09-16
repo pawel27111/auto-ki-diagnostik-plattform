@@ -105,6 +105,15 @@ export function registerOAuthRoutes(app: Express) {
    * nonce it issued and the cookie it set.
    */
   app.get("/api/oauth/login", (req: Request, res: Response) => {
+    // A local checkout has no credentials for the OAuth server, so without this
+    // there is no way to obtain a session and nothing in the app can be tried
+    // out. Gated twice: the flag is refused at boot under NODE_ENV=production
+    // (see assertRequiredEnv), and re-checked here.
+    if (ENV.devAuth.enabled && !ENV.isProduction) {
+      void handleDevLogin(req, res);
+      return;
+    }
+
     const redirectUri = `${currentOrigin(req)}/api/oauth/callback`;
     const nonce = randomUUID();
     const state = encodeState({ nonce, redirectUri });
@@ -129,6 +138,53 @@ export function registerOAuthRoutes(app: Express) {
   app.get("/api/oauth/callback", (req: Request, res: Response) => {
     void handleCallback(req, res);
   });
+
+  /**
+   * Issue a session without contacting the OAuth server.
+   *
+   * The user row is written before the cookie is handed out: the session only
+   * carries an openId, and {@link sdk.authenticateRequest} would otherwise try
+   * to fill in the missing user from the OAuth server — which is exactly the
+   * service this bypass exists to avoid.
+   *
+   * Ends on the same redirect as the real callback, so every client that walks
+   * the normal login flow — the web app and the Android WebView alike — works
+   * unchanged.
+   */
+  async function handleDevLogin(req: Request, res: Response): Promise<void> {
+    if (ENV.isProduction || !ENV.devAuth.enabled) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+
+    try {
+      await db.upsertUser({
+        openId: ENV.devAuth.openId,
+        name: ENV.devAuth.name,
+        email: ENV.devAuth.email,
+        loginMethod: "dev",
+        lastSignedIn: new Date(),
+      });
+
+      const sessionToken = await sdk.createSessionToken(ENV.devAuth.openId, {
+        name: ENV.devAuth.name,
+        expiresInMs: SESSION_TTL_MS,
+      });
+
+      res.cookie(COOKIE_NAME, sessionToken, {
+        ...getSessionCookieOptions(req),
+        maxAge: SESSION_TTL_MS,
+      });
+
+      console.warn(
+        `[OAuth] Development login used — signed in as "${ENV.devAuth.openId}"`
+      );
+      res.redirect(302, "/dashboard");
+    } catch (error) {
+      console.error("[OAuth] Development login failed", error);
+      res.status(500).json({ error: "Development login failed" });
+    }
+  }
 
   async function handleCallback(req: Request, res: Response): Promise<void> {
     const code = getQueryParam(req, "code");

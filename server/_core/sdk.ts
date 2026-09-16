@@ -37,6 +37,11 @@ const GET_USER_INFO_WITH_JWT_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserI
 
 class OAuthService {
   constructor(private client: ReturnType<typeof axios.create>) {
+    // Silent when the development login is active: it deliberately runs without
+    // an OAuth server, and shouting about the missing setting there sends
+    // anyone following the local setup instructions hunting for a non-problem.
+    if (ENV.devAuth.enabled) return;
+
     console.log("[OAuth] Initialized with baseURL:", ENV.oAuthServerUrl);
     if (!ENV.oAuthServerUrl) {
       console.error(

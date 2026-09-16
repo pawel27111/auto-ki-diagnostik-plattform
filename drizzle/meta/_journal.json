@@ -22,6 +22,13 @@
       "when": 1787312431757,
       "tag": "0002_normal_kingpin",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1788095326969,
+      "tag": "0003_restore_diagnostic_count_defaults",
+      "breakpoints": true
     }
   ]
 }
